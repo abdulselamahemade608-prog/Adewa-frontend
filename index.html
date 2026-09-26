@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>Anti Fraud Test</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+</head>
+
+<body>
+
+<h2>Security Check</h2>
+
+<p id="status">
+Checking...
+</p>
+
+<script>
+
+const tg =
+  window.Telegram.WebApp;
+
+tg.ready();
+
+tg.expand();
+
+/*
+=========================================================
+CREATE DEVICE INSTALLATION ID
+=========================================================
+*/
+
+let deviceId =
+  localStorage.getItem(
+    'device_installation_id'
+  );
+
+if (!deviceId) {
+
+  deviceId =
+    crypto.randomUUID();
+
+  localStorage.setItem(
+    'device_installation_id',
+    deviceId
+  );
+
+}
+
+/*
+=========================================================
+SEND AUTHENTICATION
+=========================================================
+*/
+
+async function authenticate() {
+
+  const initData =
+    tg.initData;
+
+  if (!initData) {
+
+    document.getElementById('status').textContent =
+      'Open this Mini App from Telegram.';
+
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        '/api/auth',
+        {
+
+          method: 'POST',
+
+          headers: {
+
+            'Content-Type':
+              'application/json',
+
+            'x-init-data':
+              initData,
+
+            'x-device':
+              deviceId
+
+          }
+
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (data.banned) {
+
+      document.getElementById('status').textContent =
+        '🚫 Account blocked.';
+
+      return;
+    }
+
+    if (data.restricted) {
+
+      document.getElementById('status').textContent =
+        '⚠️ Account under security review.';
+
+      return;
+    }
+
+    if (data.ok) {
+
+      document.getElementById('status').textContent =
+        '✅ Security check passed.';
+
+      console.log(
+        'User:',
+        data.user
+      );
+
+      console.log(
+        'Security:',
+        data.security
+      );
+
+    } else {
+
+      document.getElementById('status').textContent =
+        'Security check failed.';
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    document.getElementById('status').textContent =
+      'Server connection error.';
+
+  }
+
+}
+
+authenticate();
+
+</script>
+
+</body>
+
+</html>
