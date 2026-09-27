@@ -10,169 +10,373 @@
   content="width=device-width, initial-scale=1.0"
 >
 
-<title>Anti Fraud Test</title>
+<title>Adewa - Security Check</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+
+  :root {
+    --bg: #0f1117;
+    --card-bg: #171a22;
+    --border: #262a35;
+    --text: #f2f3f5;
+    --muted: #8b8f9b;
+    --accent: #4f8cff;
+    --success: #34c777;
+    --danger: #ff4d5e;
+    --warning: #ffb020;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 20px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+
+  .icon-wrap {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(79, 140, 255, 0.12);
+    transition: background 0.3s ease;
+  }
+
+  .icon-wrap.success { background: rgba(52, 199, 119, 0.12); }
+  .icon-wrap.danger  { background: rgba(255, 77, 94, 0.12); }
+  .icon-wrap.warning { background: rgba(255, 176, 32, 0.12); }
+
+  .icon {
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  .spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid rgba(79, 140, 255, 0.25);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 19px;
+    font-weight: 600;
+  }
+
+  p.desc {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .badge {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .badge.danger {
+    background: rgba(255, 77, 94, 0.15);
+    color: var(--danger);
+  }
+
+  .badge.warning {
+    background: rgba(255, 176, 32, 0.15);
+    color: var(--warning);
+  }
+
+  .retry-btn {
+    margin-top: 20px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: none;
+  }
+
+  .retry-btn:active {
+    opacity: 0.85;
+  }
+
+</style>
 
 </head>
 
 <body>
 
-<h2>Security Check</h2>
+<div class="card">
 
-<p id="status">
-Checking...
-</p>
+  <div class="icon-wrap" id="iconWrap">
+    <div class="spinner" id="spinner"></div>
+    <span class="icon" id="icon" style="display:none;"></span>
+  </div>
+
+  <h2 id="title">Checking your account</h2>
+  <p class="desc" id="desc">Please wait a moment...</p>
+
+  <span class="badge" id="badge" style="display:none;"></span>
+
+  <button class="retry-btn" id="retryBtn">Try Again</button>
+
+</div>
 
 <script>
 
-const tg =
-  window.Telegram.WebApp;
+const tg = window.Telegram.WebApp;
 
 tg.ready();
-
 tg.expand();
+
+const els = {
+  iconWrap: document.getElementById('iconWrap'),
+  spinner: document.getElementById('spinner'),
+  icon: document.getElementById('icon'),
+  title: document.getElementById('title'),
+  desc: document.getElementById('desc'),
+  badge: document.getElementById('badge'),
+  retryBtn: document.getElementById('retryBtn')
+};
 
 /*
 =========================================================
-CREATE DEVICE INSTALLATION ID
+UI STATE HELPERS
 =========================================================
 */
 
-let deviceId =
-  localStorage.getItem(
-    'device_installation_id'
-  );
+function setState(type, { icon, title, desc, badge } = {}) {
 
-if (!deviceId) {
+  els.spinner.style.display = (type === 'loading') ? 'block' : 'none';
+  els.icon.style.display = (type === 'loading') ? 'none' : 'block';
 
-  deviceId =
-    crypto.randomUUID();
+  els.iconWrap.className = 'icon-wrap' + (type !== 'loading' ? ' ' + type : '');
 
-  localStorage.setItem(
-    'device_installation_id',
-    deviceId
-  );
+  if (icon) els.icon.textContent = icon;
+  if (title) els.title.textContent = title;
+  if (desc) els.desc.textContent = desc;
 
+  if (badge) {
+    els.badge.textContent = badge;
+    els.badge.className = 'badge ' + (type === 'success' ? 'success' : type);
+    els.badge.style.display = 'inline-block';
+  } else {
+    els.badge.style.display = 'none';
+  }
+
+  els.retryBtn.style.display = (type === 'error') ? 'inline-block' : 'none';
 }
 
 /*
 =========================================================
-SEND AUTHENTICATION
+DEVICE INSTALLATION ID
+=========================================================
+*/
+
+let deviceId = localStorage.getItem('device_installation_id');
+
+if (!deviceId) {
+  deviceId = crypto.randomUUID();
+  localStorage.setItem('device_installation_id', deviceId);
+}
+
+/*
+=========================================================
+BAN REASON TEXT (matches backend ban_reason / getBanType logic)
+=========================================================
+*/
+
+function describeBan(reason) {
+
+  const r = String(reason || '').toLowerCase();
+
+  if (r.includes('vpn') || r.includes('proxy') || r.includes('tor')) {
+    return {
+      icon: '🛡️',
+      title: 'Access Blocked',
+      desc: 'A VPN or proxy connection was detected. Please disable it and use a normal network to continue.',
+      badge: 'VPN / PROXY DETECTED'
+    };
+  }
+
+  if (r.includes('multiple') || r.includes('same device') || r.includes('same ip')) {
+    return {
+      icon: '👥',
+      title: 'Access Blocked',
+      desc: 'Multiple Telegram accounts were detected from this device or network. Only one account is allowed.',
+      badge: 'MULTIPLE ACCOUNTS DETECTED'
+    };
+  }
+
+  return {
+    icon: '🚫',
+    title: 'Account Banned',
+    desc: 'Your account has been permanently banned from Adewa.',
+    badge: 'BANNED'
+  };
+}
+
+/*
+=========================================================
+FETCH WITH TIMEOUT (fixes the "stuck on Checking..." issue)
+=========================================================
+*/
+
+function fetchWithTimeout(url, options, timeoutMs) {
+
+  const controller = new AbortController();
+
+  const timer = setTimeout(
+    () => controller.abort(),
+    timeoutMs
+  );
+
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
+/*
+=========================================================
+AUTHENTICATE
 =========================================================
 */
 
 async function authenticate() {
 
-  const initData =
-    tg.initData;
+  setState('loading', {
+    title: 'Checking your account',
+    desc: 'Please wait a moment...'
+  });
+
+  const initData = tg.initData;
 
   if (!initData) {
 
-    document.getElementById('status').textContent =
-      'Open this Mini App from Telegram.';
+    setState('warning', {
+      icon: '⚠️',
+      title: 'Open in Telegram',
+      desc: 'This app must be opened from inside Telegram.',
+    });
 
     return;
   }
 
   try {
 
-    const response =
-      await fetch(
-        '/api/auth',
-        {
-
-          method: 'POST',
-
-          headers: {
-
-            'Content-Type':
-              'application/json',
-
-            'x-init-data':
-              initData,
-
-            'x-device':
-              deviceId
-
-          }
-
+    const response = await fetchWithTimeout(
+      '/api/auth',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-init-data': initData,
+          'x-device': deviceId
         }
-      );
+      },
+      15000 // 15s timeout instead of hanging forever
+    );
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
-    // -------------------------------------------------------
-    // BANNED
-    // -------------------------------------------------------
+    // ---------------------------------------------------
+    // BANNED (backend returns status: 'banned', reason: "...")
+    // ---------------------------------------------------
 
     if (data.status === 'banned') {
 
-      document.getElementById('status').textContent =
-        '🚫 Your account has been permanently banned.';
+      const info = describeBan(data.reason);
+
+      setState('danger', info);
 
       return;
     }
 
-    // -------------------------------------------------------
-    // INVALID / EXPIRED TELEGRAM SIGNATURE
-    // -------------------------------------------------------
-
-    if (data.status === 'invalid') {
-
-      document.getElementById('status').textContent =
-        '⚠️ Verification failed. Please reopen the app from Telegram.';
-
-      return;
-    }
-
-    // -------------------------------------------------------
-    // SERVER ERROR
-    // -------------------------------------------------------
-
-    if (data.status === 'error') {
-
-      document.getElementById('status').textContent =
-        '⚠️ Server error. Please try again later.';
-
-      return;
-    }
-
-    // -------------------------------------------------------
-    // VERIFIED
-    // -------------------------------------------------------
+    // ---------------------------------------------------
+    // VERIFIED / SUCCESS
+    // ---------------------------------------------------
 
     if (data.ok && data.status === 'verified') {
 
-      document.getElementById('status').textContent =
-        '✅ Security check passed.';
+      setState('success', {
+        icon: '✅',
+        title: 'Verified',
+        desc: 'Security check passed successfully.'
+      });
 
-      console.log(
-        'Response:',
-        data
-      );
+      setTimeout(() => {
+        // Redirect or unlock next step here, e.g.:
+        // window.location.href = '/home.html';
+      }, 800);
 
       return;
     }
 
-    // -------------------------------------------------------
-    // FALLBACK
-    // -------------------------------------------------------
+    // ---------------------------------------------------
+    // INVALID / OTHER ERROR FROM SERVER
+    // ---------------------------------------------------
 
-    document.getElementById('status').textContent =
-      'Security check failed.';
+    setState('error', {
+      icon: '❌',
+      title: 'Verification Failed',
+      desc: data.message || 'Something went wrong. Please try again.'
+    });
 
   } catch (error) {
 
     console.error(error);
 
-    document.getElementById('status').textContent =
-      'Server connection error.';
+    const timedOut = (error.name === 'AbortError');
 
+    setState('error', {
+      icon: '📡',
+      title: timedOut ? 'Connection Timed Out' : 'Connection Error',
+      desc: timedOut
+        ? 'The server took too long to respond. Check your connection and try again.'
+        : 'Could not reach the server. Please try again.'
+    });
   }
-
 }
+
+els.retryBtn.addEventListener('click', authenticate);
 
 authenticate();
 
