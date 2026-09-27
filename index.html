@@ -163,10 +163,16 @@
 
 <script>
 
-const tg = window.Telegram.WebApp;
+const hasTelegram =
+  typeof window.Telegram !== 'undefined' &&
+  window.Telegram.WebApp;
 
-tg.ready();
-tg.expand();
+const tg = hasTelegram ? window.Telegram.WebApp : null;
+
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
 
 const els = {
   iconWrap: document.getElementById('iconWrap'),
@@ -286,6 +292,17 @@ async function authenticate() {
     title: 'Checking your account',
     desc: 'Please wait a moment...'
   });
+
+  if (!hasTelegram) {
+
+    setState('warning', {
+      icon: '⚠️',
+      title: 'Open in Telegram',
+      desc: 'This page must be opened as a Telegram Mini App, not in a regular browser.'
+    });
+
+    return;
+  }
 
   const initData = tg.initData;
 
