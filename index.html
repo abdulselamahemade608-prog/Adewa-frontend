@@ -2,936 +2,930 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  >
+<meta charset="UTF-8">
 
-  <title>Adewa Security</title>
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Adewa Security Check</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      min-height: 100%;
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
-      color: #111827;
-    }
+<style>
 
-    body {
-      display: flex;
-      justify-content: center;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    .app {
-      width: 100%;
-      max-width: 480px;
-      min-height: 100vh;
-      padding: 24px 18px;
-    }
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+}
 
-    .header {
-      text-align: center;
-      padding-top: 20px;
-    }
+body {
+  background: #f5f7fa;
+  color: #111827;
+}
 
-    .logo {
-      width: 76px;
-      height: 76px;
-      margin: auto;
-      border-radius: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #111827;
-      color: white;
-      font-size: 30px;
-      font-weight: 800;
-    }
+.security-screen {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
 
-    h1 {
-      margin: 18px 0 8px;
-      font-size: 25px;
-    }
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    .subtitle {
-      margin: 0;
-      color: #6b7280;
-      font-size: 14px;
-      line-height: 1.5;
-    }
+  padding: 24px;
+}
 
-    .card {
-      margin-top: 24px;
-      padding: 20px;
-      border-radius: 20px;
-      background: white;
-      border: 1px solid #e5e7eb;
-    }
+.security-card {
+  width: 100%;
+  max-width: 420px;
 
-    .status-icon {
-      width: 58px;
-      height: 58px;
-      margin: 0 auto 15px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f3f4f6;
-      font-size: 25px;
-    }
+  background: #ffffff;
 
-    .status-title {
-      text-align: center;
-      font-size: 19px;
-      font-weight: 700;
-      margin-bottom: 7px;
-    }
+  border-radius: 24px;
 
-    .status-text {
-      text-align: center;
-      color: #6b7280;
-      font-size: 14px;
-      line-height: 1.5;
-    }
+  padding: 32px 24px;
 
-    .loader {
-      width: 30px;
-      height: 30px;
-      margin: 0 auto;
-      border: 3px solid #e5e7eb;
-      border-top-color: #111827;
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
+  text-align: center;
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.08);
+}
 
-    .user-card {
-      display: none;
-      margin-top: 16px;
-      padding: 17px;
-      border-radius: 18px;
-      background: white;
-      border: 1px solid #e5e7eb;
-    }
+.icon {
+  width: 72px;
+  height: 72px;
 
-    .row {
-      display: flex;
-      justify-content: space-between;
-      gap: 15px;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
-    }
+  margin: 0 auto 20px;
 
-    .row:last-child {
-      border-bottom: 0;
-    }
+  border-radius: 50%;
 
-    .label {
-      color: #6b7280;
-      font-size: 13px;
-    }
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    .value {
-      font-size: 13px;
-      font-weight: 600;
-      text-align: right;
-      word-break: break-word;
-    }
+  font-size: 34px;
 
-    .error {
-      color: #b91c1c;
-    }
+  background: #eef2f7;
+}
 
-    .success {
-      color: #047857;
-    }
+.security-card h2 {
+  margin: 0 0 12px;
 
-    .warning {
-      color: #b45309;
-    }
+  font-size: 24px;
+  font-weight: 700;
+}
 
-    .danger {
-      color: #b91c1c;
-    }
+.security-card p {
+  margin: 0;
 
-    .retry {
-      display: none;
-      width: 100%;
-      margin-top: 18px;
-      padding: 14px;
-      border: 0;
-      border-radius: 13px;
-      background: #111827;
-      color: white;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-    }
+  font-size: 15px;
 
-    .retry:active {
-      transform: scale(.98);
-    }
+  line-height: 1.6;
 
-    .footer {
-      margin-top: 25px;
-      text-align: center;
-      color: #9ca3af;
-      font-size: 12px;
-    }
-  </style>
+  color: #667085;
+}
+
+.loading-spinner {
+  width: 38px;
+  height: 38px;
+
+  margin: 0 auto 20px;
+
+  border: 4px solid #e5e7eb;
+  border-top-color: #111827;
+
+  border-radius: 50%;
+
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
+.hidden {
+  display: none !important;
+}
+
+.banned {
+  background: #fff1f2;
+}
+
+.banned .security-card {
+  border: 1px solid #fecdd3;
+}
+
+.banned .icon {
+  background: #fee2e2;
+}
+
+.banned h2 {
+  color: #b91c1c;
+}
+
+.success {
+  background: #f0fdf4;
+}
+
+.success .security-card {
+  border: 1px solid #bbf7d0;
+}
+
+.success .icon {
+  background: #dcfce7;
+}
+
+.success h2 {
+  color: #15803d;
+}
+
+.error {
+  background: #fff7ed;
+}
+
+.error .security-card {
+  border: 1px solid #fed7aa;
+}
+
+.error .icon {
+  background: #ffedd5;
+}
+
+.error h2 {
+  color: #c2410c;
+}
+
+</style>
+
 </head>
 
 <body>
 
-  <main class="app">
+<!-- =====================================================
+     SECURITY CHECK SCREEN
+===================================================== -->
 
-    <section class="header">
+<div
+  id="securityScreen"
+  class="security-screen"
+>
 
-      <div class="logo">
-        A
-      </div>
+  <div
+    id="securityCard"
+    class="security-card"
+  >
 
-      <h1>
-        Adewa
-      </h1>
-
-      <p class="subtitle">
-        Secure Telegram Mini App
-      </p>
-
-    </section>
-
-
-    <section class="card">
-
-      <div
-        id="statusIcon"
-        class="status-icon"
-      >
-        <div class="loader"></div>
-      </div>
-
-      <div
-        id="statusTitle"
-        class="status-title"
-      >
-        Security Check
-      </div>
-
-      <div
-        id="statusText"
-        class="status-text"
-      >
-        Verifying your Telegram account...
-      </div>
-
-      <button
-        id="retryButton"
-        class="retry"
-        type="button"
-      >
-        Try Again
-      </button>
-
-    </section>
-
-
-    <section
-      id="userCard"
-      class="user-card"
+    <div
+      id="securityIcon"
+      class="icon"
     >
-
-      <div class="row">
-
-        <span class="label">
-          Telegram ID
-        </span>
-
-        <span
-          id="userId"
-          class="value"
-        >
-          -
-        </span>
-
-      </div>
-
-
-      <div class="row">
-
-        <span class="label">
-          Username
-        </span>
-
-        <span
-          id="username"
-          class="value"
-        >
-          -
-        </span>
-
-      </div>
-
-
-      <div class="row">
-
-        <span class="label">
-          Name
-        </span>
-
-        <span
-          id="firstName"
-          class="value"
-        >
-          -
-        </span>
-
-      </div>
-
-
-      <div class="row">
-
-        <span class="label">
-          Risk Score
-        </span>
-
-        <span
-          id="riskScore"
-          class="value"
-        >
-          -
-        </span>
-
-      </div>
-
-
-      <div class="row">
-
-        <span class="label">
-          Security Status
-        </span>
-
-        <span
-          id="securityStatus"
-          class="value"
-        >
-          -
-        </span>
-
-      </div>
-
-    </section>
-
-
-    <div class="footer">
-      Adewa Security System
+      <div
+        id="spinner"
+        class="loading-spinner"
+      ></div>
     </div>
 
-  </main>
+    <h2 id="securityTitle">
+      Security Check
+    </h2>
+
+    <p id="status">
+      Checking your account...
+    </p>
+
+  </div>
+
+</div>
 
 
-  <script>
+<script>
 
-    'use strict';
+/*
+=========================================================
+TELEGRAM WEB APP
+=========================================================
+*/
 
-
-    /*
-    =====================================================
-    TELEGRAM
-    =====================================================
-    */
-
-    const tg =
-      window.Telegram &&
-      window.Telegram.WebApp
-        ? window.Telegram.WebApp
-        : null;
+const tg =
+  window.Telegram &&
+  window.Telegram.WebApp;
 
 
-    /*
-    =====================================================
-    API
-    =====================================================
-    */
+/*
+=========================================================
+BACKEND URL
+=========================================================
+*/
 
-    const API_URL =
-      'https://adewa.vercel.app';
-
-
-    /*
-    =====================================================
-    DOM
-    =====================================================
-    */
-
-    const statusIcon =
-      document.getElementById('statusIcon');
-
-    const statusTitle =
-      document.getElementById('statusTitle');
-
-    const statusText =
-      document.getElementById('statusText');
-
-    const retryButton =
-      document.getElementById('retryButton');
-
-    const userCard =
-      document.getElementById('userCard');
-
-    const userId =
-      document.getElementById('userId');
-
-    const username =
-      document.getElementById('username');
-
-    const firstName =
-      document.getElementById('firstName');
-
-    const riskScore =
-      document.getElementById('riskScore');
-
-    const securityStatus =
-      document.getElementById('securityStatus');
+const API_URL =
+  'https://adewa.vercel.app';
 
 
-    /*
-    =====================================================
-    TELEGRAM SETUP
-    =====================================================
-    */
+/*
+=========================================================
+INITIALIZE TELEGRAM
+=========================================================
+*/
 
-    if (tg) {
+if (!tg) {
 
-      tg.ready();
+  showError(
+    'Open this Mini App from Telegram.'
+  );
 
-      tg.expand();
+} else {
 
-      /*
-      Use Telegram theme colors when available.
-      */
+  tg.ready();
 
-      if (
-        tg.themeParams &&
-        tg.themeParams.bg_color
-      ) {
+  tg.expand();
 
-        document.body.style.background =
-          tg.themeParams.bg_color;
+  authenticate();
+
+}
+
+
+/*
+=========================================================
+CREATE DEVICE INSTALLATION ID
+=========================================================
+*/
+
+let deviceId =
+  localStorage.getItem(
+    'device_installation_id'
+  );
+
+
+if (!deviceId) {
+
+  if (
+    window.crypto &&
+    typeof crypto.randomUUID === 'function'
+  ) {
+
+    deviceId =
+      crypto.randomUUID();
+
+  } else {
+
+    deviceId =
+      'device-' +
+      Date.now() +
+      '-' +
+      Math.random()
+        .toString(36)
+        .substring(2);
+
+  }
+
+  localStorage.setItem(
+    'device_installation_id',
+    deviceId
+  );
+
+}
+
+
+/*
+=========================================================
+GET DOM ELEMENTS
+=========================================================
+*/
+
+const securityScreen =
+  document.getElementById(
+    'securityScreen'
+  );
+
+const securityCard =
+  document.getElementById(
+    'securityCard'
+  );
+
+const securityIcon =
+  document.getElementById(
+    'securityIcon'
+  );
+
+const spinner =
+  document.getElementById(
+    'spinner'
+  );
+
+const securityTitle =
+  document.getElementById(
+    'securityTitle'
+  );
+
+const statusText =
+  document.getElementById(
+    'status'
+  );
+
+
+/*
+=========================================================
+SHOW LOADING
+=========================================================
+*/
+
+function showLoading(message) {
+
+  securityScreen.className =
+    'security-screen';
+
+  securityCard.className =
+    'security-card';
+
+  securityIcon.innerHTML = `
+    <div class="loading-spinner"></div>
+  `;
+
+  securityTitle.textContent =
+    'Security Check';
+
+  statusText.textContent =
+    message ||
+    'Checking your account...';
+
+}
+
+
+/*
+=========================================================
+SHOW SUCCESS
+=========================================================
+*/
+
+function showSuccess(message) {
+
+  securityScreen.className =
+    'security-screen success';
+
+  securityCard.className =
+    'security-card';
+
+  securityIcon.innerHTML =
+    '✓';
+
+  securityTitle.textContent =
+    'Verification Successful';
+
+  statusText.textContent =
+    message ||
+    'Your verification is successfully.';
+
+}
+
+
+/*
+=========================================================
+SHOW VPN / PROXY BAN
+=========================================================
+*/
+
+function showVpnBan() {
+
+  securityScreen.className =
+    'security-screen banned';
+
+  securityCard.className =
+    'security-card';
+
+  securityIcon.innerHTML =
+    '🚫';
+
+  securityTitle.textContent =
+    'Account Permanently Banned';
+
+  statusText.innerHTML = `
+    <strong>
+      🚫 VPN/Proxy detected.
+    </strong>
+
+    <br><br>
+
+    Your account has been permanently
+    banned from Adewa.
+  `;
+
+  /*
+  Prevent Telegram Mini App from being
+  used normally after ban.
+  */
+
+  disableApp();
+
+}
+
+
+/*
+=========================================================
+SHOW MULTIPLE ACCOUNT BAN
+=========================================================
+*/
+
+function showMultipleAccountBan() {
+
+  securityScreen.className =
+    'security-screen banned';
+
+  securityCard.className =
+    'security-card';
+
+  securityIcon.innerHTML =
+    '🚫';
+
+  securityTitle.textContent =
+    'Account Permanently Banned';
+
+  statusText.innerHTML = `
+    <strong>
+      🚫 Multiple accounts detected.
+    </strong>
+
+    <br><br>
+
+    Your account has been permanently
+    banned from Adewa.
+  `;
+
+  /*
+  Prevent Telegram Mini App from being
+  used normally after ban.
+  */
+
+  disableApp();
+
+}
+
+
+/*
+=========================================================
+SHOW GENERIC BAN
+=========================================================
+*/
+
+function showGenericBan() {
+
+  securityScreen.className =
+    'security-screen banned';
+
+  securityCard.className =
+    'security-card';
+
+  securityIcon.innerHTML =
+    '🚫';
+
+  securityTitle.textContent =
+    'Account Permanently Banned';
+
+  statusText.innerHTML = `
+    <strong>
+      🚫 Account blocked.
+    </strong>
+
+    <br><br>
+
+    Your account has been permanently
+    banned from Adewa.
+  `;
+
+  disableApp();
+
+}
+
+
+/*
+=========================================================
+SHOW TELEGRAM REQUIRED ERROR
+=========================================================
+*/
+
+function showTelegramError() {
+
+  securityScreen.className =
+    'security-screen error';
+
+  securityCard.className =
+    'security-card';
+
+  securityIcon.innerHTML =
+    '⚠️';
+
+  securityTitle.textContent =
+    'Telegram Required';
+
+  statusText.textContent =
+    'Open this Mini App from Telegram.';
+
+}
+
+
+/*
+=========================================================
+SHOW SERVER ERROR
+=========================================================
+*/
+
+function showError(message) {
+
+  securityScreen.className =
+    'security-screen error';
+
+  securityCard.className =
+    'security-card';
+
+  securityIcon.innerHTML =
+    '⚠️';
+
+  securityTitle.textContent =
+    'Connection Error';
+
+  statusText.textContent =
+    message ||
+    'Server connection error.';
+
+}
+
+
+/*
+=========================================================
+DISABLE APP AFTER BAN
+=========================================================
+*/
+
+function disableApp() {
+
+  /*
+  Hide everything except the security screen.
+  */
+
+  document
+    .querySelectorAll(
+      'button, input, select, textarea, a'
+    )
+    .forEach(
+      element => {
+
+        element.disabled =
+          true;
+
+        element.style.pointerEvents =
+          'none';
 
       }
-
-      if (
-        tg.themeParams &&
-        tg.themeParams.text_color
-      ) {
-
-        document.body.style.color =
-          tg.themeParams.text_color;
-
-      }
-
-    }
-
-
-    /*
-    =====================================================
-    DEVICE INSTALLATION ID
-    =====================================================
-    */
-
-    function getDeviceId() {
-
-      const KEY =
-        'adewa_device_installation_id';
-
-      let deviceId =
-        localStorage.getItem(KEY);
-
-
-      /*
-      Existing device
-      */
-
-      if (deviceId) {
-
-        return deviceId;
-
-      }
-
-
-      /*
-      New device
-      */
-
-      if (
-        window.crypto &&
-        crypto.randomUUID
-      ) {
-
-        deviceId =
-          crypto.randomUUID();
-
-      } else {
-
-        deviceId =
-          'device-' +
-          Date.now() +
-          '-' +
-          Math.random()
-            .toString(36)
-            .substring(2);
-
-      }
-
-
-      localStorage.setItem(
-        KEY,
-        deviceId
-      );
-
-
-      return deviceId;
-
-    }
-
-
-    /*
-    =====================================================
-    SHOW LOADING
-    =====================================================
-    */
-
-    function showLoading() {
-
-      statusIcon.innerHTML =
-        '<div class="loader"></div>';
-
-      statusTitle.textContent =
-        'Security Check';
-
-      statusTitle.className =
-        'status-title';
-
-      statusText.textContent =
-        'Verifying your Telegram account...';
-
-      statusText.className =
-        'status-text';
-
-      retryButton.style.display =
-        'none';
-
-      userCard.style.display =
-        'none';
-
-    }
-
-
-    /*
-    =====================================================
-    SHOW ERROR
-    =====================================================
-    */
-
-    function showError(message) {
-
-      statusIcon.textContent =
-        '⚠️';
-
-      statusTitle.textContent =
-        'Verification Failed';
-
-      statusTitle.className =
-        'status-title error';
-
-      statusText.textContent =
-        message;
-
-      statusText.className =
-        'status-text error';
-
-      retryButton.style.display =
-        'block';
-
-    }
-
-
-    /*
-    =====================================================
-    SHOW SUCCESS
-    =====================================================
-    */
-
-    function showSuccess(data) {
-
-      statusIcon.textContent =
-        '✓';
-
-      statusTitle.textContent =
-        'Security Check Passed';
-
-      statusTitle.className =
-        'status-title success';
-
-      statusText.textContent =
-        'Your account is ready to use.';
-
-      statusText.className =
-        'status-text success';
-
-      retryButton.style.display =
-        'none';
-
-
-      /*
-      USER
-      */
-
-      if (data.user) {
-
-        userId.textContent =
-          data.user.id || '-';
-
-        username.textContent =
-          data.user.username
-            ? '@' + data.user.username
-            : 'No username';
-
-        firstName.textContent =
-          data.user.first_name || '-';
-
-      }
-
-
-      /*
-      SECURITY
-      */
-
-      if (data.security) {
-
-        riskScore.textContent =
-          data.security.risk_score ?? '0';
-
-        securityStatus.textContent =
-          data.security.status || 'active';
-
-      }
-
-
-      userCard.style.display =
-        'block';
-
-    }
-
-
-    /*
-    =====================================================
-    SHOW RESTRICTED
-    =====================================================
-    */
-
-    function showRestricted(data) {
-
-      statusIcon.textContent =
-        '⚠️';
-
-      statusTitle.textContent =
-        'Security Review';
-
-      statusTitle.className =
-        'status-title warning';
-
-      statusText.textContent =
-        data.message ||
-        'Your account is temporarily restricted.';
-
-      statusText.className =
-        'status-text warning';
-
-      retryButton.style.display =
-        'none';
-
-      userCard.style.display =
-        'none';
-
-    }
-
-
-    /*
-    =====================================================
-    SHOW BANNED
-    =====================================================
-    */
-
-    function showBanned(data) {
-
-      statusIcon.textContent =
-        '🚫';
-
-      statusTitle.textContent =
-        'Account Blocked';
-
-      statusTitle.className =
-        'status-title danger';
-
-      statusText.textContent =
-        data.message ||
-        'Your account has been blocked.';
-
-      statusText.className =
-        'status-text danger';
-
-      retryButton.style.display =
-        'none';
-
-      userCard.style.display =
-        'none';
-
-    }
-
-
-    /*
-    =====================================================
-    AUTHENTICATE
-    =====================================================
-    */
-
-    async function authenticate() {
-
-      showLoading();
-
-
-      /*
-      Telegram unavailable
-      */
-
-      if (!tg) {
-
-        showError(
-          'Telegram WebApp is not available.'
-        );
-
-        return;
-
-      }
-
-
-      /*
-      Telegram initData
-      */
-
-      const initData =
-        tg.initData;
-
-
-      if (!initData) {
-
-        showError(
-          'Please open this Mini App from Telegram.'
-        );
-
-        return;
-
-      }
-
-
-      /*
-      Device
-      */
-
-      const deviceId =
-        getDeviceId();
-
-
-      try {
-
-        const response =
-          await fetch(
-            API_URL + '/api/auth',
-            {
-
-              method: 'POST',
-
-              headers: {
-
-                'Content-Type':
-                  'application/json',
-
-                'x-init-data':
-                  initData,
-
-                'x-device':
-                  deviceId
-
-              }
-
-            }
-          );
-
-
-        /*
-        Convert response to JSON
-        */
-
-        let data;
-
-        try {
-
-          data =
-            await response.json();
-
-        } catch {
-
-          throw new Error(
-            'Invalid server response'
-          );
-
-        }
-
-
-        /*
-        BANNED
-        */
-
-        if (
-          response.status === 403 &&
-          data.banned
-        ) {
-
-          showBanned(data);
-
-          return;
-
-        }
-
-
-        /*
-        RESTRICTED
-        */
-
-        if (
-          response.status === 403 &&
-          data.restricted
-        ) {
-
-          showRestricted(data);
-
-          return;
-
-        }
-
-
-        /*
-        AUTH ERROR
-        */
-
-        if (
-          response.status === 401
-        ) {
-
-          showError(
-            data.error ||
-            'Telegram verification failed.'
-          );
-
-          return;
-
-        }
-
-
-        /*
-        OTHER SERVER ERROR
-        */
-
-        if (!response.ok) {
-
-          showError(
-            data.error ||
-            'Server error. Please try again.'
-          );
-
-          return;
-
-        }
-
-
-        /*
-        SUCCESS
-        */
-
-        if (data.ok) {
-
-          showSuccess(data);
-
-          return;
-
-        }
-
-
-        /*
-        UNKNOWN
-        */
-
-        showError(
-          'Security verification failed.'
-        );
-
-      } catch (error) {
-
-        console.error(
-          'Authentication error:',
-          error
-        );
-
-        showError(
-          'Could not connect to the security server.'
-        );
-
-      }
-
-    }
-
-
-    /*
-    =====================================================
-    RETRY
-    =====================================================
-    */
-
-    retryButton.addEventListener(
-      'click',
-      authenticate
     );
 
 
+  /*
+  Disable keyboard interactions.
+  */
+
+  document.addEventListener(
+    'keydown',
+    function(event) {
+
+      event.preventDefault();
+
+    },
+    true
+  );
+
+
+  /*
+  Prevent clicks outside the security card.
+  */
+
+  document.addEventListener(
+    'click',
+    function(event) {
+
+      if (
+        !securityCard.contains(
+          event.target
+        )
+      ) {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+      }
+
+    },
+    true
+  );
+
+}
+
+
+/*
+=========================================================
+DETECT BAN REASON
+=========================================================
+*/
+
+function handleBanReason(
+  reason
+) {
+
+  const text =
+    String(
+      reason || ''
+    ).toLowerCase();
+
+
+  /*
+  VPN / PROXY / TOR
+  */
+
+  if (
+    text.includes('vpn') ||
+    text.includes('proxy') ||
+    text.includes('tor')
+  ) {
+
+    showVpnBan();
+
+    return;
+
+  }
+
+
+  /*
+  MULTIPLE ACCOUNT
+  */
+
+  if (
+    text.includes('multiple') ||
+    text.includes('multi account') ||
+    text.includes('multi-account') ||
+    text.includes('different telegram account') ||
+    text.includes('same device')
+  ) {
+
+    showMultipleAccountBan();
+
+    return;
+
+  }
+
+
+  /*
+  UNKNOWN BAN
+  */
+
+  showGenericBan();
+
+}
+
+
+/*
+=========================================================
+AUTHENTICATION
+=========================================================
+*/
+
+async function authenticate() {
+
+  showLoading(
+    'Checking your account...'
+  );
+
+
+  /*
+  Telegram initData
+  */
+
+  const initData =
+    tg &&
+    tg.initData;
+
+
+  /*
+  Mini App must be opened from Telegram.
+  */
+
+  if (!initData) {
+
+    showTelegramError();
+
+    return;
+
+  }
+
+
+  try {
+
+    const response =
+      await fetch(
+        API_URL +
+        '/api/auth',
+        {
+
+          method: 'POST',
+
+          headers: {
+
+            'Content-Type':
+              'application/json',
+
+            'x-init-data':
+              initData,
+
+            'x-device':
+              deviceId
+
+          }
+
+        }
+      );
+
+
+    /*
+    Try to read JSON response.
+    */
+
+    let data = null;
+
+    try {
+
+      data =
+        await response.json();
+
+    } catch {
+
+      data = null;
+
+    }
+
+
     /*
     =====================================================
-    START
+    HTTP 403 = BANNED
     =====================================================
     */
 
-    authenticate();
+    if (
+      response.status === 403
+    ) {
 
-  </script>
+      /*
+      Backend sends:
+
+      {
+        ok: false,
+        status: "banned",
+        reason: "...",
+        message: "..."
+      }
+      */
+
+      if (
+        data &&
+        data.status === 'banned'
+      ) {
+
+        handleBanReason(
+          data.reason
+        );
+
+        return;
+
+      }
+
+
+      /*
+      Even if reason is missing,
+      403 from security endpoint
+      is treated as banned.
+      */
+
+      showGenericBan();
+
+      return;
+
+    }
+
+
+    /*
+    =====================================================
+    OTHER SERVER ERRORS
+    =====================================================
+    */
+
+    if (!response.ok) {
+
+      showError(
+        data &&
+        data.message
+          ? data.message
+          : 'Security verification failed.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+    =====================================================
+    SUCCESS
+    =====================================================
+    */
+
+    if (
+      data &&
+      data.ok &&
+      data.status === 'verified'
+    ) {
+
+      showSuccess(
+        data.message ||
+        'Your verification is successfully.'
+      );
+
+
+      console.log(
+        'Security verification:',
+        data
+      );
+
+
+      /*
+      IMPORTANT:
+      ================================================
+      If you have your real Adewa app UI,
+      this is where it should be opened.
+      ================================================
+      */
+
+      /*
+      Example:
+
+      loadAdewaApp();
+
+      */
+
+
+      return;
+
+    }
+
+
+    /*
+    =====================================================
+    UNEXPECTED RESPONSE
+    =====================================================
+    */
+
+    showError(
+      data &&
+      data.message
+        ? data.message
+        : 'Security check failed.'
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      'Authentication error:',
+      error
+    );
+
+    showError(
+      'Server connection error. Please try again.'
+    );
+
+  }
+
+}
+
+</script>
 
 </body>
 
