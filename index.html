@@ -83,6 +83,13 @@
     font-size: 40px;
     font-weight: 800;
     color: #fff;
+    overflow: hidden;
+  }
+
+  .logo-ring img {
+    width: 62%;
+    height: 62%;
+    object-fit: contain;
   }
 
   @keyframes pulse {
@@ -474,7 +481,9 @@
 <!-- ================= SPLASH ================= -->
 
 <div class="screen active" id="splashScreen">
-  <div class="logo-ring">A</div>
+  <div class="logo-ring" id="logoRing">
+    <img src="logo.png" alt="Adewa" onerror="this.style.display='none'; this.parentElement.textContent='A';">
+  </div>
   <div class="splash-title">Adewa</div>
   <div class="splash-sub">Welcome to your Mini App</div>
   <div class="splash-dots"><span></span><span></span><span></span></div>
@@ -926,4 +935,4 @@ setTimeout(authenticate, 1400);
 
 </body>
 
-</html>
+    </html>
