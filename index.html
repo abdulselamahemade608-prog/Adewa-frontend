@@ -639,13 +639,10 @@ async function showAd(provider, cfg) {
     return;
   }
   if (provider === 'adsbitvex') {
-    // Adapter for the Adsbitvex SDK. Adjust the call below to match the
-    // snippet from your Adsbitvex dashboard if their SDK differs.
-    if (!cfg.adsbitvex_zone) throw new Error('Adsbitvex not configured');
-    if (cfg.adsbitvex_script) await loadScript(cfg.adsbitvex_script);
-    const sdk = window.AdsBitvex || window.Adsbitvex;
-    if (!sdk || typeof sdk.show !== 'function') throw new Error('Adsbitvex SDK not available');
-    await sdk.show({ zone: cfg.adsbitvex_zone });
+    if (!cfg.adsbitvex_script) throw new Error('Adsbitvex not configured');
+    await loadScript(cfg.adsbitvex_script);
+    if (typeof window.showadsbitvex !== 'function') throw new Error('Adsbitvex SDK not available');
+    await window.showadsbitvex();
     return;
   }
   throw new Error('Unknown provider');
