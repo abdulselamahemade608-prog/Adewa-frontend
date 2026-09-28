@@ -168,6 +168,33 @@ select.inp{appearance:none}
 .agrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .proofimg{width:100%;border-radius:10px;margin-top:10px;background:var(--s2)}
 .addr{word-break:break-all;font-size:12.5px;background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px}
+/* ---------- refresh: look & responsiveness ---------- */
+:root{--bg:#080a0e;--s1:#11151c;--s2:#171c25;--s3:#1f2632;--line:#242c39;--r:18px}
+html,body{background:radial-gradient(900px 500px at 50% -10%,rgba(77,163,255,.10),transparent 60%),var(--bg);background-attachment:fixed;font-size:clamp(14.5px,3.6vw,16px)}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--s1);border-radius:var(--r);padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.btn{height:48px;border-radius:14px;background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0));box-shadow:0 6px 16px rgba(0,0,0,.3);transition:transform .12s,filter .15s}
+.btn:hover{filter:brightness(1.08)}.btn.ghost{background-image:none;box-shadow:none}.btn.s{height:38px}
+.inp{height:48px;border-radius:14px;transition:border-color .15s,box-shadow .15s}.inp:focus{box-shadow:0 0 0 3px rgba(77,163,255,.18)}
+.bal{background:linear-gradient(135deg,#14202f,#11151c 60%)!important}
+.bal .big{font-size:clamp(34px,10vw,46px)}
+.stat{border-radius:16px;background:var(--s1);transition:transform .15s}.stat:hover{transform:translateY(-2px)}
+.chip{padding:4px 10px}.seg,.linkbox{border-radius:14px}
+.nav{max-width:560px;margin:0 auto;left:50%;right:auto;width:100%;transform:translateX(-50%);border-radius:22px 22px 0 0;border:1px solid var(--line);border-bottom:0;background:rgba(17,21,28,.82);backdrop-filter:blur(16px)}
+.nav button{border-radius:14px;transition:color .15s,transform .12s}.nav button:active{transform:scale(.93)}
+.nav button.on svg{filter:drop-shadow(0 0 6px currentColor)}
+.chips button{transition:transform .12s,background .15s}.chips button:active{transform:scale(.95)}
+.toast{border-radius:14px;backdrop-filter:blur(10px)}
+.pages{max-width:560px}
+@media (min-width:720px){
+  .pages{max-width:760px;padding:10px 24px 28px}
+  .stat-grid{gap:14px}.agrid{grid-template-columns:repeat(3,1fr)}
+  #adminBody .card .field{max-width:520px}
+  .top{max-width:760px;margin:0 auto;padding-left:24px;padding-right:24px}
+  .nav{max-width:560px;bottom:12px;border-radius:22px;border-bottom:1px solid var(--line)}
+}
+@media (min-width:1100px){.pages,.top{max-width:920px}}
+@media (max-width:360px){.stat b{font-size:16px}.btn{padding:0 12px}.card{padding:14px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 
@@ -177,7 +204,7 @@ select.inp{appearance:none}
 <div class="screen active" id="splash">
   <div class="center">
     <div class="logo-wrap">A<img src="logo.png" alt="Adewa" onerror="this.remove()"></div>
-    <div class="splash-title">Adewa</div>
+    <div class="splash-title" id="appName1">Adewa</div>
     <div class="splash-sub">Welcome to your Mini App</div>
     <div class="dots"><span></span><span></span><span></span></div>
   </div>
@@ -199,7 +226,7 @@ select.inp{appearance:none}
 <!-- ============ APP ============ -->
 <div class="screen" id="app">
   <div class="top">
-    <div class="brand"><span class="lg">A<img src="logo.png" alt="" onerror="this.remove()"></span>Adewa</div>
+    <div class="brand"><span class="lg">A<img src="logo.png" alt="" onerror="this.remove()"></span><span id="appName2">Adewa</span></div>
     <span class="pill" id="adminPill" style="display:none">ADMIN</span>
   </div>
 
@@ -402,7 +429,12 @@ async function authenticate() {
   }
 }
 
-async function loadMe() { S.me = await api('/api/me'); }
+async function loadMe() {
+  S.me = await api('/api/me');
+  const n = S.me.app_name || 'Adewa';
+  document.title = n;
+  ['appName1', 'appName2'].forEach((id) => { const e = document.getElementById(id); if (e) e.textContent = n; });
+}
 
 async function boot() {
   show('splash');
@@ -770,7 +802,7 @@ async function renderProfile() {
       '<div class="req">' + ico(okInv ? 'check' : 'users', okInv ? C.green : C.amber, 'sm') + '<div class="grow">' + ref.required + ' active invited friends<div class="xs mut">Each must watch ads on ' + ref.ad_days + ' different days</div></div><b>' + ref.active + '/' + ref.required + '</b></div>' +
       '<div class="req">' + ico(okBal ? 'check' : 'coin', okBal ? C.green : C.amber, 'sm') + '<div class="grow">Minimum balance<div class="xs mut">' + fmt(m.withdraw.min_coins) + ' coins</div></div><b>' + fmt(m.coins) + '</b></div>' +
 
-      '<div class="seg" style="margin:14px 0 12px"><button class="on" data-act="wdMethod" data-m="bep20" id="m-bep20">BEP20 (USDT)</button><button data-act="wdMethod" data-m="ton" id="m-ton">TON wallet</button></div>' +
+      '<div class="seg" style="margin:14px 0 12px">' + m.withdraw.methods.map((k, n) => '<button class="' + (n === 0 ? 'on' : '') + '" data-act="wdMethod" data-m="' + k + '" id="m-' + k + '">' + (k === 'bep20' ? 'BEP20 (USDT)' : 'TON wallet') + '</button>').join('') + '</div>' +
       '<div class="field"><label id="addrLbl">BEP20 address</label><input class="inp" id="wdAddr" placeholder="0x..." autocomplete="off"></div>' +
       '<div class="field"><label>Coins to withdraw</label><input class="inp" id="wdCoins" type="number" inputmode="numeric" placeholder="' + m.withdraw.min_coins + '"><div class="hint" id="wdHint"></div></div>' +
       '<button class="btn green block" data-act="withdraw">' + svg('send') + 'Request withdrawal</button>' +
@@ -778,7 +810,7 @@ async function renderProfile() {
 
     '<div class="h">History</div><div class="card" id="wdList"><div class="empty">Loading</div></div>';
 
-  S.wdMethod = 'bep20';
+  S.wdMethod = m.withdraw.methods[0] || 'bep20';
   $('#wdCoins').addEventListener('input', () => {
     const v = Number($('#wdCoins').value) || 0;
     $('#wdHint').textContent = v ? (v * r.birr_per_coin).toFixed(2) + ' ETB / ' + (v * r.usdt_per_coin).toFixed(3) + ' USDT' : '';
@@ -794,8 +826,7 @@ async function renderProfile() {
 
 H.wdMethod = (el) => {
   S.wdMethod = el.dataset.m;
-  $('#m-bep20').classList.toggle('on', S.wdMethod === 'bep20');
-  $('#m-ton').classList.toggle('on', S.wdMethod === 'ton');
+  ['bep20', 'ton'].forEach((k) => { const e = $('#m-' + k); if (e) e.classList.toggle('on', S.wdMethod === k); });
   $('#addrLbl').textContent = S.wdMethod === 'bep20' ? 'BEP20 address' : 'TON wallet address';
   $('#wdAddr').placeholder = S.wdMethod === 'bep20' ? '0x...' : 'UQ...';
 };
@@ -815,7 +846,7 @@ H.withdraw = async () => {
    ========================================================= */
 
 const ADMIN_TABS = [
-  ['overview', 'Overview'], ['ads', 'Ads'], ['rates', 'Rates'], ['tasks', 'Tasks'], ['proofs', 'Proofs'],
+  ['overview', 'Overview'], ['ads', 'Ads'], ['rates', 'Settings'], ['tasks', 'Tasks'], ['proofs', 'Proofs'],
   ['payouts', 'Payouts'], ['promo', 'Promo'], ['users', 'Users'], ['channels', 'Channels'], ['broadcast', 'Broadcast']
 ];
 
@@ -886,7 +917,12 @@ AV.ads = (b) => settingsView(b, 'Ad settings', 'play', C.blue, [
   ['adsbitvex_script', 'Adsbitvex SDK script URL', 'Optional. Loaded before showing an ad.']
 ]);
 
-AV.rates = (b) => settingsView(b, 'System rates', 'sliders', C.amber, [
+AV.rates = (b) => settingsView(b, 'App & withdrawal settings', 'sliders', C.amber, [
+  ['app_name', 'App name', 'Shown in the header, splash screen and browser title.'],
+  ['ads_enabled', 'Ads enabled (1 = on, 0 = off)', '', 'number'],
+  ['spin_enabled', 'Daily spin enabled (1 = on, 0 = off)', '', 'number'],
+  ['wd_bep20_enabled', 'BEP20 withdrawals (1 = on, 0 = off)', '', 'number'],
+  ['wd_ton_enabled', 'TON withdrawals (1 = on, 0 = off)', '', 'number'],
   ['birr_per_coin', 'ETB per 1 coin', 'Example: 0.05', 'number'],
   ['usdt_per_coin', 'USDT per 1 coin', 'Example: 0.0004', 'number'],
   ['min_withdraw_coins', 'Minimum withdrawal (coins)', '', 'number'],
