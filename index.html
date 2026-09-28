@@ -420,6 +420,7 @@ async function authenticate() {
   try {
     const res = await fetchT(API + '/api/auth', { method: 'POST', headers: hdr() }, 15000);
     const d = await res.json();
+    if (d.status === 'maintenance') return { status: { type: 'warning', icon: 'alert', title: 'Under maintenance', desc: d.message || 'Bot is temporarily under maintenance. Please try again later.', retry: true } };
     if (d.status === 'banned') return { status: describeBan(d.reason) };
     if (d.ok && d.status === 'verified') return { ok: true, admin: d.admin === true };
     return { status: { type: 'error', icon: 'xcircle', title: 'Verification failed', desc: d.message || 'Something went wrong.', retry: true } };
@@ -431,6 +432,7 @@ async function authenticate() {
 
 async function loadMe() {
   S.me = await api('/api/me');
+  S.cdUntil = Date.now() + (S.me.ads.cooldown_left || 0) * 1000;
   const n = S.me.app_name || 'Adewa';
   document.title = n;
   ['appName1', 'appName2'].forEach((id) => { const e = document.getElementById(id); if (e) e.textContent = n; });
@@ -465,6 +467,7 @@ function enterApp(isAdmin) {
     '<button data-page="' + t.id + '" style="--c:' + t.color + '">' + svg(t.icon) + t.label + '</button>').join('');
   show('app');
   go('home');
+  armIdle();
 }
 
 let poll = null;
@@ -496,7 +499,10 @@ document.addEventListener('click', async (e) => {
   const fn = H[el.dataset.act];
   if (!fn) return;
   el.disabled = true;
-  try { await fn(el); }
+  try {
+    if (!NO_POP.has(el.dataset.act) && S.page !== 'admin') await popAd('click');
+    await fn(el);
+  }
   catch (err) { toast(err.message || 'Something went wrong', 'err'); }
   finally { el.disabled = false; }
 });
@@ -530,12 +536,12 @@ function renderHome() {
     '<div class="card bal">' +
       '<div class="lbl">Total balance</div>' +
       '<div class="big"><span style="color:' + C.amber + '">' + svg('coin') + '</span>' + fmt(m.coins) + '</div>' +
-      '<div class="sub">' + (m.coins * r.birr_per_coin).toFixed(2) + ' ETB &nbsp;/&nbsp; ' + (m.coins * r.usdt_per_coin).toFixed(3) + ' USDT</div>' +
+      '<div class="sub">&asymp; ' + (m.coins * r.usdt_per_coin).toFixed(3) + ' USDT</div>' +
     '</div>' +
 
     '<div class="card">' +
       '<div class="row">' + ico('flame', C.orange) +
-        '<div class="grow"><div class="b">' + m.streak + ' day streak</div><div class="xs mut">Best: ' + m.best_streak + ' days. Open Adewa daily to keep it going.</div></div>' +
+        '<div class="grow"><div class="b">' + m.streak + ' day streak</div><div class="xs mut">Best: ' + m.best_streak + ' days. Reach ' + m.streak_bonus.days + ' days in a row for +' + m.streak_bonus.coins + ' bonus coins.</div></div>' +
       '</div>' +
       '<div class="streak-bar">' + bar + '</div>' +
     '</div>' +
@@ -593,21 +599,27 @@ function ring(pct, color, big, small) {
 }
 
 function taskCard(t) {
-  const isCh = t.kind === 'channel';
+  const isCh = t.kind === 'channel', isGr = t.kind === 'group';
   const provider = String(t.provider || '').toLowerCase();
-  const icon = isCh ? ico('megaphone', C.teal) : t.kind === 'social' ? ico('globe', C.violet) : ico(PROVIDER_ICON[provider] || 'layers', C.orange);
-  const kindLabel = isCh ? 'Join' : t.kind === 'social' ? 'Social' : (t.provider || 'Partner');
+  const icon = isGr ? ico('users', C.blue) : isCh ? ico('megaphone', C.teal) : t.kind === 'social' ? ico('globe', C.violet) : ico(PROVIDER_ICON[provider] || 'layers', C.orange);
+  const kindLabel = isGr ? 'Add members' : isCh ? 'Join' : t.kind === 'social' ? 'Social' : (t.provider || 'Partner');
 
-  let acts;
-  if (t.my_status === 'pending') acts = '<span class="chip amber" style="padding:9px 14px;flex:1;text-align:center">Under review</span>';
+  let acts, prog = '';
+  if (isGr) {
+    const pct = Math.min(100, t.target_members ? (t.progress / t.target_members) * 100 : 0);
+    prog = '<div class="bar"><i style="width:' + pct + '%"></i></div><div class="xs mut" style="margin-top:6px">Members added: <b>' + t.target_members + '/' + t.progress + '</b> &middot; only real users with a username and photo count.</div>';
+    acts = '<button class="btn ghost s" data-act="openTask" data-url="' + esc(t.link) + '">Open group</button><button class="btn green s" data-act="claim" data-id="' + t.id + '"' + (t.progress >= t.target_members ? '' : ' disabled') + '>Claim</button>';
+  } else if (t.my_status === 'pending') acts = '<span class="chip amber" style="padding:9px 14px;flex:1;text-align:center">Under review</span>';
   else if (isCh) acts = '<button class="btn ghost s" data-act="openTask" data-url="' + esc(t.link) + '">Open</button><button class="btn green s" data-act="claim" data-id="' + t.id + '">Verify</button>';
   else acts = '<button class="btn ghost s" data-act="openTask" data-url="' + esc(t.link) + '">Open link</button><button class="btn violet s" data-act="proof" data-id="' + t.id + '">Submit proof</button>';
+
+  const rewardChips = (t.reward ? '<span class="chip green">+' + t.reward + ' coins</span>' : '') + (t.reward_ads ? '<span class="chip blue">+' + t.reward_ads + ' ads/day</span>' : '');
 
   return '<div class="card"><div class="task">' + icon +
     '<div class="grow"><div class="b">' + esc(t.title) + '</div>' +
     (t.description ? '<div class="sm mut clamp" style="margin-top:3px">' + esc(t.description) + '</div>' : '') +
-    '<div class="meta"><span class="chip green">+' + t.reward + ' coins</span><span class="chip">' + esc(kindLabel) + '</span><span class="chip">' + t.remaining + ' left</span></div>' +
-    '</div></div><div class="acts">' + acts + '</div></div>';
+    '<div class="meta">' + rewardChips + '<span class="chip">' + esc(kindLabel) + '</span><span class="chip">' + t.remaining + ' left</span></div>' +
+    prog + '</div></div><div class="acts">' + acts + '</div></div>';
 }
 
 async function renderEarn() {
@@ -621,7 +633,7 @@ async function renderEarn() {
       '<div class="card" style="text-align:center">' +
         ring(a.limit ? a.watched / a.limit : 0, C.blue, a.watched + '/' + a.limit, 'ads watched today') +
         '<div class="sm mut" style="margin-bottom:14px">Earn <b style="color:' + C.green + '">' + a.reward + ' coins</b> for every ad you watch. ' + (left ? left + ' left today.' : 'Daily limit reached.') + '</div>' +
-        '<button class="btn block" data-act="watch"' + (left ? '' : ' disabled') + '>' + svg('play') + (left ? 'Watch an ad' : 'Come back tomorrow') + '</button>' +
+        '<button class="btn block" id="watchBtn" data-act="watch"' + (left ? '' : ' disabled') + '>' + svg('play') + (left ? 'Watch an ad' : 'Come back tomorrow') + '</button>' +
       '</div>' +
       '<div class="card"><div class="row">' + ico('clock', C.amber, 'sm') + '<div class="sm mut grow">Your invited friends count as active after they watch ads on ' + m.referrals.ad_days + ' different days.</div></div></div>';
   } else {
@@ -633,6 +645,7 @@ async function renderEarn() {
       ['ads:Watch ads', 'tasks:Tasks', 'partners:Partners'].map((x) => { const p = x.split(':'); return '<button class="' + (tab === p[0] ? 'on' : '') + '" data-act="earnTab" data-tab="' + p[0] + '">' + p[1] + '</button>'; }).join('') +
     '</div><div id="earnBody">' + body + '</div>';
 
+  if (tab === 'ads') startCd();
   if (tab !== 'ads') {
     try {
       const d = await api('/api/tasks');
@@ -652,7 +665,7 @@ H.openTask = (el) => openUrl(el.dataset.url);
 
 H.claim = async (el) => {
   const d = await api('/api/tasks/' + el.dataset.id + '/claim', { method: 'POST' });
-  toast('+' + d.reward + ' coins', 'ok');
+  toast((d.reward ? '+' + d.reward + ' coins' : 'Task complete') + (d.reward_ads ? ' and +' + d.reward_ads + ' daily ads' : ''), 'ok');
   await refresh();
 };
 
@@ -661,8 +674,28 @@ H.proof = (el) => {
   openUrl('https://t.me/' + S.me.bot_username + '?start=proof_' + el.dataset.id);
 };
 
-/* ---------- ads ---------- */
-async function showAd(provider, cfg) {
+/* ---------- ads (Adsgram + Monetag only) ---------- */
+const NO_POP = new Set(['retry', 'watch', 'withdraw', 'earnTab', 'invTab', 'adminTab', 'wdMethod', 'copyInvite', 'copyAddr']);
+const AD_FAIL = 'Ad was not completed. Please try again.';
+
+function loadMonetag(zone) {
+  if (!zone) return Promise.reject(new Error('Monetag not configured'));
+  loadMonetag.p = loadMonetag.p || {};
+  if (!loadMonetag.p[zone]) {
+    loadMonetag.p[zone] = new Promise((ok, no) => {
+      const s = document.createElement('script');
+      s.src = 'https://libtl.com/sdk.js';
+      s.dataset.zone = zone;
+      s.dataset.sdk = 'show_' + zone;
+      s.onload = ok;
+      s.onerror = () => { delete loadMonetag.p[zone]; no(new Error('Monetag failed to load')); };
+      document.head.appendChild(s);
+    });
+  }
+  return loadMonetag.p[zone];
+}
+
+async function showAd(provider, cfg, pop) {
   if (provider === 'adsgram') {
     if (!cfg.adsgram_block_id) throw new Error('Adsgram not configured');
     await loadScript('https://sad.adsgram.ai/js/sad.min.js');
@@ -670,19 +703,69 @@ async function showAd(provider, cfg) {
     if (!r || !r.done) throw new Error('Ad not completed');
     return;
   }
-  if (provider === 'adsbitvex') {
-    if (!cfg.adsbitvex_script) throw new Error('Adsbitvex not configured');
-    await loadScript(cfg.adsbitvex_script);
-    if (typeof window.showadsbitvex !== 'function') throw new Error('Adsbitvex SDK not available');
-    await window.showadsbitvex();
+  if (provider === 'monetag') {
+    await loadMonetag(cfg.monetag_zone);
+    const fn = window['show_' + cfg.monetag_zone];
+    if (typeof fn !== 'function') throw new Error('Monetag SDK not available');
+    await fn();
     return;
   }
   throw new Error('Unknown provider');
 }
 
+/* Short ads on button taps, idle screen and the withdraw gate. Never back-to-back:
+   a minimum gap (admin-configurable) is kept between two of them. */
+let lastPop = 0, popBusy = false;
+async function popAd(purpose, force) {
+  const m = S.me;
+  if (!m || !m.ads.enabled || popBusy) return false;
+  const gap = (purpose === 'idle' ? m.idle_gap : m.pop_gap) * 1000;
+  if (!force && Date.now() - lastPop < gap) return false;
+  popBusy = true;
+  try {
+    const order = Math.random() < 0.5 ? ['adsgram', 'monetag'] : ['monetag', 'adsgram'];
+    let ok = false;
+    for (let i = 0; i < order.length && !ok; i++) {
+      try { await showAd(order[i], m.ad_cfg, true); ok = true; } catch (e) { console.warn(order[i], e.message); }
+    }
+    if (!ok) return false;
+    lastPop = Date.now();
+    await api('/api/pop', { method: 'POST', body: { purpose } }).catch(() => {});
+    return true;
+  } finally { popBusy = false; }
+}
+
+let idleT = null;
+function armIdle() {
+  clearTimeout(idleT);
+  idleT = setTimeout(async () => {
+    if (document.visibilityState === 'visible' && S.me && S.page !== 'admin') await popAd('idle');
+    armIdle();
+  }, 5000);
+}
+['touchstart', 'click', 'scroll', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { if (S.me) armIdle(); }, { passive: true }));
+
+/* Visible countdown between two rewarded ads. */
+let cdTimer = null;
+function startCd() {
+  clearInterval(cdTimer);
+  const tick = () => {
+    const b = $('#watchBtn');
+    if (!b) { clearInterval(cdTimer); return; }
+    const a = S.me.ads;
+    if (a.watched >= a.limit) { clearInterval(cdTimer); return; }
+    const left = Math.ceil(((S.cdUntil || 0) - Date.now()) / 1000);
+    if (left > 0) { b.disabled = true; b.innerHTML = svg('clock') + 'Next ad in ' + left + 's'; }
+    else { b.disabled = false; b.innerHTML = svg('play') + 'Watch an ad'; clearInterval(cdTimer); }
+  };
+  tick();
+  cdTimer = setInterval(tick, 500);
+}
+
 H.watch = async () => {
   const a = S.me.ads;
   if (a.watched >= a.limit) throw new Error('Daily ad limit reached. Come back tomorrow.');
+  if (Date.now() < (S.cdUntil || 0)) throw new Error('Please wait for the timer.');
   const s = await api('/api/ads/start', { method: 'POST' });
 
   let used = null;
@@ -691,9 +774,12 @@ H.watch = async () => {
     try { await showAd(order[i], s.config); used = order[i]; break; }
     catch (e) { console.warn(order[i], e.message); }
   }
-  if (!used) throw new Error('No ad is available right now. Please try again in a moment.');
+  if (!used) throw new Error(AD_FAIL);
 
-  const r = await api('/api/ads/complete', { method: 'POST', body: { token: s.token, provider: used } });
+  let r;
+  try { r = await api('/api/ads/complete', { method: 'POST', body: { token: s.token, provider: used } }); }
+  catch (e) { throw new Error(/network|fetch|abort|failed/i.test(e.message) ? AD_FAIL : e.message); }
+  lastPop = Date.now();
   toast('+' + r.reward + ' coins', 'ok');
   await refresh();
 };
@@ -729,6 +815,17 @@ async function renderInvite() {
       '<div class="xs mut" style="margin-top:8px">' + ref.total + ' invited in total. A friend becomes active after watching ads on ' + ref.ad_days + ' different days. You need ' + ref.required + ' active friends to withdraw.</div>' +
     '</div>' +
 
+    '<div class="h">My referrals</div>' +
+    '<div class="card">' +
+      '<div class="stat-grid" style="grid-template-columns:1fr 1fr">' +
+        '<div class="stat"><b>' + ref.total + '</b><span>Total invited</span></div>' +
+        '<div class="stat"><b>' + ref.verified + '</b><span>Verified referrals</span></div>' +
+        '<div class="stat"><b>' + ref.pending + '</b><span>Pending referrals</span></div>' +
+        '<div class="stat"><b>' + fmt(ref.earned) + '</b><span>Earned from referrals</span></div>' +
+      '</div>' +
+      '<div class="xs mut" style="margin-top:12px">You earn <b>' + fmt(ref.reward) + ' coins</b> per friend: half after they finish a full day of ads, the rest after a second full day. Joining alone pays nothing. If a friend leaves our channel the bonus is taken back.</div>' +
+    '</div>' +
+
     '<div class="h">Promo code</div>' +
     '<div class="card"><div class="row" style="gap:8px">' + ico('ticket', C.rose) +
       '<input class="inp" id="promoInp" placeholder="Enter code" autocapitalize="characters" style="text-transform:uppercase">' +
@@ -737,7 +834,7 @@ async function renderInvite() {
     '<div class="h">Leaderboards</div>' +
     '<div class="seg" style="margin-bottom:12px">' +
       '<button class="' + (S.invTab === 'mine' ? 'on' : '') + '" data-act="invTab" data-tab="mine">My top invites</button>' +
-      '<button class="' + (S.invTab === 'top' ? 'on' : '') + '" data-act="invTab" data-tab="top">Top earners</button>' +
+      '<button class="' + (S.invTab === 'top' ? 'on' : '') + '" data-act="invTab" data-tab="top">Weekly top</button>' +
     '</div>' +
     '<div class="card" id="lbBox"><div class="empty">Loading</div></div>';
 
@@ -752,7 +849,7 @@ function paintLb() {
   if (!b || !S.lb) return;
   b.innerHTML = S.invTab === 'mine'
     ? '<div class="row" style="margin-bottom:6px">' + ico('users', C.violet, 'sm') + '<span class="sm mut">Top 10 friends you invited by coins earned</span></div>' + lbRows(S.lb.invitees, C.green)
-    : '<div class="row" style="margin-bottom:6px">' + ico('trophy', C.amber, 'sm') + '<span class="sm mut">Top 15 earners in Adewa</span></div>' + lbRows(S.lb.top, C.amber);
+    : '<div class="row" style="margin-bottom:6px">' + ico('trophy', C.amber, 'sm') + '<span class="sm mut">This week\'s top earners. Prizes: #1 ' + fmt(S.me.lb_prizes[0]) + ', #2 ' + fmt(S.me.lb_prizes[1]) + ', #3 ' + fmt(S.me.lb_prizes[2]) + ' coins</span></div>' + lbRows(S.lb.top, C.amber);
 }
 
 H.invTab = (el) => {
@@ -792,15 +889,15 @@ async function renderProfile() {
     '<div class="card" style="margin-top:12px">' +
       '<div class="row">' + ico('wallet', C.green) + '<div class="grow"><div class="xs mut">Wallet balance</div><div class="b" style="font-size:22px">' + fmt(m.coins) + ' coins</div></div></div>' +
       '<div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-top:14px">' +
-        '<div class="stat"><b>' + (m.coins * r.birr_per_coin).toFixed(2) + '</b><span>ETB</span></div>' +
         '<div class="stat"><b>' + (m.coins * r.usdt_per_coin).toFixed(3) + '</b><span>USDT</span></div>' +
+        '<div class="stat"><b>' + fmt(m.withdraw.withdrawable) + '</b><span>Withdrawable coins</span></div>' +
       '</div>' +
     '</div>' +
 
     '<div class="h">Withdraw</div>' +
     '<div class="card">' +
       '<div class="req">' + ico(okInv ? 'check' : 'users', okInv ? C.green : C.amber, 'sm') + '<div class="grow">' + ref.required + ' active invited friends<div class="xs mut">Each must watch ads on ' + ref.ad_days + ' different days</div></div><b>' + ref.active + '/' + ref.required + '</b></div>' +
-      '<div class="req">' + ico(okBal ? 'check' : 'coin', okBal ? C.green : C.amber, 'sm') + '<div class="grow">Minimum balance<div class="xs mut">' + fmt(m.withdraw.min_coins) + ' coins</div></div><b>' + fmt(m.coins) + '</b></div>' +
+      '<div class="req">' + ico(okBal ? 'check' : 'coin', okBal ? C.green : C.amber, 'sm') + '<div class="grow">Withdraw limits<div class="xs mut">Min ' + fmt(m.withdraw.min_coins) + ' / Max ' + fmt(m.withdraw.max_coins) + ' coins. Wait ' + m.withdraw.cooldown_hours + 'h between requests' + (m.withdraw.cooldown_left_hours > 0 ? ' (' + m.withdraw.cooldown_left_hours + 'h left)' : '') + '. ' + m.withdraw.fee_percent + '% service fee. You watch ' + m.withdraw.required_ads + ' ads per request.</div></div><b>' + fmt(m.coins) + '</b></div>' +
 
       '<div class="seg" style="margin:14px 0 12px">' + m.withdraw.methods.map((k, n) => '<button class="' + (n === 0 ? 'on' : '') + '" data-act="wdMethod" data-m="' + k + '" id="m-' + k + '">' + (k === 'bep20' ? 'BEP20 (USDT)' : 'TON wallet') + '</button>').join('') + '</div>' +
       '<div class="field"><label id="addrLbl">BEP20 address</label><input class="inp" id="wdAddr" placeholder="0x..." autocomplete="off"></div>' +
@@ -813,7 +910,8 @@ async function renderProfile() {
   S.wdMethod = m.withdraw.methods[0] || 'bep20';
   $('#wdCoins').addEventListener('input', () => {
     const v = Number($('#wdCoins').value) || 0;
-    $('#wdHint').textContent = v ? (v * r.birr_per_coin).toFixed(2) + ' ETB / ' + (v * r.usdt_per_coin).toFixed(3) + ' USDT' : '';
+    const gross = v * r.usdt_per_coin, fee = gross * m.withdraw.fee_percent / 100;
+    $('#wdHint').textContent = v ? gross.toFixed(3) + ' USDT - ' + fee.toFixed(3) + ' fee = ' + (gross - fee).toFixed(3) + ' USDT you receive' : '';
   });
 
   try {
@@ -836,6 +934,11 @@ H.withdraw = async () => {
   const coins = Number($('#wdCoins').value);
   if (!address) throw new Error('Enter your wallet address.');
   if (!coins) throw new Error('Enter the amount of coins.');
+  const need = S.me.withdraw.required_ads || 0;
+  for (let i = 0; i < need; i++) {
+    toast('Ad ' + (i + 1) + ' of ' + need);
+    if (!(await popAd('withdraw', true))) throw new Error(AD_FAIL);
+  }
   await api('/api/withdraw', { method: 'POST', body: { method: S.wdMethod, address, coins } });
   toast('Withdrawal requested. You will be notified when it is paid.', 'ok');
   await refresh();
@@ -846,8 +949,8 @@ H.withdraw = async () => {
    ========================================================= */
 
 const ADMIN_TABS = [
-  ['overview', 'Overview'], ['ads', 'Ads'], ['rates', 'Settings'], ['tasks', 'Tasks'], ['proofs', 'Proofs'],
-  ['payouts', 'Payouts'], ['promo', 'Promo'], ['users', 'Users'], ['channels', 'Channels'], ['broadcast', 'Broadcast']
+  ['overview', 'Overview'], ['ads', 'Ads'], ['rewards', 'Rewards'], ['wd', 'Withdraw'], ['rates', 'Settings'], ['tasks', 'Tasks'],
+  ['proofs', 'Proofs'], ['payouts', 'Payouts'], ['promo', 'Promo'], ['users', 'Users'], ['channels', 'Channels'], ['broadcast', 'Broadcast']
 ];
 
 function renderAdmin() {
@@ -901,47 +1004,79 @@ const AV = {};
 
 AV.overview = async (b) => {
   const d = await api('/api/admin/stats'), s = d.stats;
-  const cell = (n, l, c) => '<div class="card" style="margin:0"><div class="row">' + ico(n, c, 'sm') + '<div><div class="b" style="font-size:20px">' + fmt(s[l[0]]) + '</div><div class="xs mut">' + l[1] + '</div></div></div></div>';
+  const cell = (n, l, c, f) => '<div class="card" style="margin:0"><div class="row">' + ico(n, c, 'sm') + '<div><div class="b" style="font-size:20px">' + (f ? f(s[l[0]]) : fmt(s[l[0]])) + '</div><div class="xs mut">' + l[1] + '</div></div></div></div>';
+  const usd = (v) => Number(v || 0).toFixed(2);
   b.innerHTML = '<div class="agrid">' +
-    cell('users', ['total', 'Total users'], C.blue) + cell('check', ['verified', 'Verified'], C.green) +
-    cell('ban', ['banned', 'Banned'], C.rose) + cell('coin', ['coins_in_wallets', 'Coins in wallets'], C.amber) +
-    cell('image', ['proofs', 'Proofs pending'], C.violet) + cell('wallet', ['withdrawals', 'Payouts pending'], C.orange) + '</div>';
+    cell('users', ['total', 'Total users'], C.blue) + cell('flame', ['active_today', 'Active users today'], C.orange) +
+    cell('play', ['ads_today', 'Ads watched today'], C.green) + cell('coin', ['usdt_paid', 'Total USDT distributed'], C.amber, usd) +
+    cell('wallet', ['wd_total', 'Total withdrawals'], C.violet) + cell('clock', ['withdrawals', 'Pending withdrawals'], C.rose) +
+    cell('gift', ['ref_bonus_usdt', 'Referral bonuses (USDT)'], C.teal, usd) + cell('shield', ['usdt_paid_today', 'Paid today (cap ' + s.cap_usdt + ')'], C.blue, usd) +
+    cell('check', ['verified', 'Verified'], C.green) + cell('ban', ['banned', 'Banned'], C.rose) +
+    cell('image', ['proofs', 'Proofs pending'], C.violet) + cell('coin', ['coins_in_wallets', 'Coins in wallets'], C.amber) + '</div>';
 };
 
-AV.ads = (b) => settingsView(b, 'Ad settings', 'play', C.blue, [
-  ['ad_daily_limit', 'Ads per user per day', 'Maximum ads each user can watch daily.', 'number'],
-  ['ad_reward', 'Coins per ad', '', 'number'],
+AV.ads = (b) => settingsView(b, 'Ad settings (Adsgram + Monetag)', 'play', C.blue, [
+  ['ad_daily_limit', 'Ads per user per day', 'Base limit. Group tasks can add extra ads per user.', 'number'],
+  ['ad_reward', 'Ad reward (coins)', '', 'number'],
   ['ad_min_seconds', 'Minimum watch time (seconds)', 'Rewards are refused if the ad finishes faster than this.', 'number'],
+  ['ad_cooldown_seconds', 'Ad cooldown (seconds)', 'Countdown shown to the user between two ads.', 'number'],
+  ['pop_gap_seconds', 'Gap between button-tap ads (seconds)', 'Prevents ads on every tap.', 'number'],
+  ['idle_ad_gap_seconds', 'Gap between idle-screen ads (seconds)', 'Shown after 5 seconds without touching the screen.', 'number'],
+  ['wd_required_ads', 'Ads required per withdraw request', '', 'number'],
   ['adsgram_block_id', 'Adsgram block ID', 'Example: 12345 or int-12345'],
-  ['adsbitvex_zone', 'Adsbitvex zone ID', ''],
-  ['adsbitvex_script', 'Adsbitvex SDK script URL', 'Optional. Loaded before showing an ad.']
+  ['monetag_zone', 'Monetag zone ID', 'The number from your Monetag Telegram Mini App zone.']
 ]);
 
-AV.rates = (b) => settingsView(b, 'App & withdrawal settings', 'sliders', C.amber, [
-  ['app_name', 'App name', 'Shown in the header, splash screen and browser title.'],
-  ['ads_enabled', 'Ads enabled (1 = on, 0 = off)', '', 'number'],
-  ['spin_enabled', 'Daily spin enabled (1 = on, 0 = off)', '', 'number'],
-  ['wd_bep20_enabled', 'BEP20 withdrawals (1 = on, 0 = off)', '', 'number'],
-  ['wd_ton_enabled', 'TON withdrawals (1 = on, 0 = off)', '', 'number'],
-  ['birr_per_coin', 'ETB per 1 coin', 'Example: 0.05', 'number'],
+AV.rewards = (b) => settingsView(b, 'Rewards & referrals', 'gift', C.violet, [
+  ['referral_reward', 'Referral bonus (coins per friend)', 'Half after the friend finishes a full day of ads, the rest after a second full day.', 'number'],
+  ['ref_fraud_threshold', 'Left referrals before "Fraudulent Referrer"', 'The inviter is banned and sent to you for review. 0 = off.', 'number'],
+  ['streak_bonus_days', 'Streak bonus every N days', 'Example: 3', 'number'],
+  ['streak_bonus_coins', 'Streak bonus (coins)', 'Paid when the streak reaches the day above.', 'number'],
+  ['lb_prize_1', 'Weekly leaderboard prize: 1st (coins)', '', 'number'],
+  ['lb_prize_2', 'Weekly leaderboard prize: 2nd (coins)', '', 'number'],
+  ['lb_prize_3', 'Weekly leaderboard prize: 3rd (coins)', '', 'number'],
+  ['group_add_daily_max', 'Max group members counted per user per day', 'Protects groups from Telegram spam detection (15-20 recommended).', 'number'],
+  ['spin_rewards', 'Spin rewards (coins)', 'Comma separated, for example 1,2,3,5,10']
+]);
+
+AV.wd = (b) => settingsView(b, 'Withdrawal rules', 'wallet', C.green, [
   ['usdt_per_coin', 'USDT per 1 coin', 'Example: 0.0004', 'number'],
   ['min_withdraw_coins', 'Minimum withdrawal (coins)', '', 'number'],
+  ['wd_max_coins', 'Maximum withdrawal (coins)', '0 = no maximum', 'number'],
+  ['wd_cooldown_hours', 'Waiting time between two withdrawals (hours)', '', 'number'],
+  ['service_fee_percent', 'Service fee (%)', 'Taken from every withdrawal. The user receives the final amount.', 'number'],
+  ['bot_daily_cap_usdt', 'Bot-wide daily payout cap (USDT)', 'Approvals over the cap wait until tomorrow. 0 = no cap.', 'number'],
   ['referral_required', 'Active invites needed to withdraw', '', 'number'],
   ['referral_ad_days', 'Ad days for an invite to count as active', '', 'number'],
-  ['spin_rewards', 'Spin rewards (coins)', 'Comma separated, for example 1,2,3,5,10']
+  ['wd_src_ads', 'Can withdraw ad earnings (1 = yes, 0 = no)', 'Spin, streak and promo earnings count as ad earnings.', 'number'],
+  ['wd_src_invite', 'Can withdraw invite earnings (1 = yes, 0 = no)', '', 'number'],
+  ['wd_src_task', 'Can withdraw task earnings (1 = yes, 0 = no)', 'When all three are 1 the user can withdraw the whole balance.', 'number'],
+  ['wd_bep20_enabled', 'BEP20 withdrawals (1 = on, 0 = off)', '', 'number'],
+  ['wd_ton_enabled', 'TON withdrawals (1 = on, 0 = off)', '', 'number'],
+  ['proof_channel_id', 'Proof channel', 'Example: @adewa_proofs or -100... The bot must be admin there.']
+]);
+
+AV.rates = (b) => settingsView(b, 'App settings', 'sliders', C.amber, [
+  ['app_name', 'App name', 'Shown in the header, splash screen and browser title.'],
+  ['maintenance', 'Maintenance mode (1 = on, 0 = off)', 'Users see: Bot is temporarily under maintenance. Admins can still use the bot.', 'number'],
+  ['support_username', 'Support username', 'Shown under /start so users can report problems. Example: @adewa_support'],
+  ['ads_enabled', 'Ads enabled (1 = on, 0 = off)', '', 'number'],
+  ['spin_enabled', 'Daily spin enabled (1 = on, 0 = off)', '', 'number']
 ]);
 
 AV.tasks = async (b) => {
   const d = await api('/api/admin/tasks');
   b.innerHTML =
     '<div class="card"><div class="row" style="margin-bottom:14px">' + ico('plus', C.green) + '<div class="b">Create a task</div></div>' +
-      fld('Task type', 't_kind', { options: [['channel', 'Channel or group (auto-checked)'], ['social', 'Social media (screenshot proof)'], ['partner', 'Partner task (screenshot proof)']] }) +
+      fld('Task type', 't_kind', { options: [['channel', 'Channel or group (auto-checked)'], ['group', 'Add members to a group (auto-counted)'], ['social', 'Social media (screenshot proof)'], ['partner', 'Partner task (screenshot proof)']] }) +
       fld('Title', 't_title', { ph: 'Join our channel' }) +
       fld('Description', 't_desc', { area: true, ph: 'What should users do?' }) +
       fld('Channel or group username', 't_chat', { ph: '@adewa_channel', hint: 'Channel tasks only. The bot must be an admin there to verify members.' }) +
       fld('Task link', 't_link', { ph: 'https://...', hint: 'Required for social and partner tasks. Optional for channels.' }) +
       fld('Partner category', 't_provider', { ph: 'Microtasks, Survey or Offerwall', hint: 'Partner tasks only.' }) +
-      fld('Reward (coins)', 't_reward', { type: 'number' }) +
+      fld('Members to add', 't_target', { type: 'number', hint: 'Group tasks only. The bot must be admin in the group. Example: 50' }) +
+      fld('Extra daily ads as reward', 't_rewardads', { type: 'number', hint: 'Group tasks only. Added to the user\'s daily ad limit.' }) +
+      fld('Reward (coins)', 't_reward', { type: 'number', hint: 'Can be 0 for group tasks that only give extra ads.' }) +
       fld('User limit', 't_max', { type: 'number', hint: 'The task disappears once this many users finish it.' }) +
       '<button class="btn green block" data-act="createTask">Publish task</button></div>' +
     '<div class="h">All tasks</div>' +
@@ -953,7 +1088,8 @@ AV.tasks = async (b) => {
 H.createTask = async () => {
   await api('/api/admin/tasks', { method: 'POST', body: {
     kind: val('t_kind'), title: val('t_title'), description: val('t_desc'), chat_id: val('t_chat'),
-    link: val('t_link'), provider: val('t_provider'), reward: val('t_reward'), max_users: val('t_max') } });
+    link: val('t_link'), provider: val('t_provider'), reward: val('t_reward'), max_users: val('t_max'),
+    target_members: val('t_target'), reward_ads: val('t_rewardads') } });
   toast('Task published', 'ok');
   loadAdminTab();
 };
@@ -987,18 +1123,19 @@ AV.payouts = async (b) => {
   const d = await api('/api/admin/withdrawals');
   b.innerHTML = d.withdrawals.length ? d.withdrawals.map((w) =>
     '<div class="card"><div class="row">' + ico('wallet', C.orange) + '<div class="grow"><div class="b">' + fmt(w.coins) + ' coins</div><div class="xs mut">' + esc(w.first_name || 'User') + (w.username ? ' @' + esc(w.username) : '') + ' / ' + w.telegram_id + '</div></div><span class="chip blue">' + esc(w.method.toUpperCase()) + '</span></div>' +
-    '<div class="sm" style="margin-top:10px"><b>' + Number(w.amount_birr).toFixed(2) + ' ETB</b> <span class="mut">/</span> <b>' + Number(w.amount_usdt).toFixed(3) + ' USDT</b></div>' +
+    '<div class="sm" style="margin-top:10px">Requested <b>' + Number(w.amount_usdt).toFixed(2) + '</b> - fee <b>' + Number(w.fee_usdt).toFixed(2) + '</b> = pay <b style="color:' + C.green + '">' + (Number(w.amount_usdt) - Number(w.fee_usdt)).toFixed(2) + ' USDT</b></div>' +
     '<div class="addr">' + esc(w.address) + '</div>' +
+    '<input class="inp" id="tx-' + w.id + '" placeholder="Transaction hash or link (optional if auto-pay is on)" style="margin-top:10px">' +
     '<div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost s" data-act="copyAddr" data-a="' + esc(w.address) + '">' + svg('copy') + 'Copy</button>' +
-    '<button class="btn green s grow" data-act="payout" data-do="paid" data-id="' + w.id + '">Mark paid</button>' +
+    '<button class="btn green s grow" data-act="payout" data-do="paid" data-id="' + w.id + '">Approve & pay</button>' +
     '<button class="btn rose s" data-act="payout" data-do="reject" data-id="' + w.id + '">Reject</button></div></div>').join('')
     : '<div class="empty">No pending withdrawals.</div>';
 };
 
 H.copyAddr = (el) => copyText(el.dataset.a);
 H.payout = async (el) => {
-  await api('/api/admin/withdrawals/' + el.dataset.id + '/' + el.dataset.do, { method: 'POST' });
-  toast(el.dataset.do === 'paid' ? 'Marked as paid' : 'Rejected and refunded', 'ok');
+  await api('/api/admin/withdrawals/' + el.dataset.id + '/' + el.dataset.do, { method: 'POST', body: { tx: val('tx-' + el.dataset.id) } });
+  toast(el.dataset.do === 'paid' ? 'Paid and posted to the proof channel' : 'Rejected and refunded', 'ok');
   loadAdminTab();
 };
 
@@ -1025,7 +1162,8 @@ AV.users = (b) => {
     '<div class="card"><div class="row" style="margin-bottom:14px">' + ico('ban', C.rose) + '<div class="b">Manage a user</div></div>' +
       fld('Telegram ID', 'u_id', { type: 'number', ph: '123456789' }) +
       '<button class="btn ghost block" data-act="lookup">' + svg('user') + 'Look up</button><div id="uInfo"></div>' +
-      '<div class="row" style="gap:8px;margin-top:12px"><button class="btn rose grow" data-act="userAct" data-do="ban">Ban</button><button class="btn green grow" data-act="userAct" data-do="unban">Unban</button></div></div>';
+      '<div class="row" style="gap:8px;margin-top:12px"><button class="btn rose grow" data-act="userAct" data-do="ban">Ban</button><button class="btn green grow" data-act="userAct" data-do="unban">Unban</button></div>' +
+    '<div class="row" style="gap:8px;margin-top:8px"><button class="btn ghost grow" data-act="lbAct" data-block="1">Block from leaderboard</button><button class="btn ghost grow" data-act="lbAct" data-block="0">Allow</button></div></div>';
 };
 
 H.lookup = async () => {
@@ -1036,6 +1174,12 @@ H.lookup = async () => {
       '<br>Status: <b>' + esc(d.user.status) + '</b>' + (d.user.ban_reason ? ' (' + esc(d.user.ban_reason) + ')' : '') +
       '<br>Coins: ' + fmt(d.user.coins) + ' / Earned: ' + fmt(d.user.total_earned) + ' / Streak: ' + (d.user.streak || 0) + '</div>'
     : '<div class="addr" style="margin-top:12px">User not found.</div>';
+};
+
+H.lbAct = async (el) => {
+  const id = val('u_id'); if (!id) throw new Error('Enter a Telegram ID.');
+  await api('/api/admin/lbblock/' + id, { method: 'POST', body: { blocked: el.dataset.block === '1' } });
+  toast(el.dataset.block === '1' ? 'Blocked from the leaderboard' : 'Allowed on the leaderboard', 'ok');
 };
 
 H.userAct = async (el) => {
@@ -1063,14 +1207,19 @@ H.addChannel = async () => {
 H.delChannel = async (el) => { await api('/api/admin/channels/' + el.dataset.id, { method: 'DELETE' }); toast('Channel removed', 'ok'); loadAdminTab(); };
 
 AV.broadcast = (b) => {
-  b.innerHTML = '<div class="card"><div class="row" style="margin-bottom:14px">' + ico('bell', C.blue) + '<div class="b">Push notification</div></div>' +
+  b.innerHTML = '<div class="card"><div class="row" style="margin-bottom:14px">' + ico('bell', C.blue) + '<div class="b">Broadcast</div></div>' +
+    fld('Type', 'b_type', { options: [['text', 'Text'], ['image', 'Image + caption'], ['announcement', 'Announcement']] }) +
     fld('Message', 'b_text', { area: true, ph: 'A new high paying task is live. Open Adewa now.', hint: 'Sent to every verified user through the bot.' }) +
+    fld('Image URL or Telegram file ID', 'b_image', { ph: 'https://... (image type only)' }) +
+    fld('Inline button text (optional)', 'b_btn', { ph: 'Open Adewa' }) +
+    fld('Inline button link (optional)', 'b_url', { ph: 'https://t.me/yourbot' }) +
     '<button class="btn block" data-act="broadcast">' + svg('send') + 'Send to all users</button></div>';
 };
 
 H.broadcast = async () => {
-  const text = val('b_text'); if (!text) throw new Error('Write a message first.');
-  const d = await api('/api/admin/broadcast', { method: 'POST', body: { text } });
+  const text = val('b_text'), image = val('b_image');
+  if (!text && !image) throw new Error('Write a message first.');
+  const d = await api('/api/admin/broadcast', { method: 'POST', body: { type: val('b_type'), text, image, button_text: val('b_btn'), button_url: val('b_url') } });
   toast('Delivered to ' + d.sent + ' of ' + d.total + ' users', 'ok');
   $('#b_text').value = '';
 };
