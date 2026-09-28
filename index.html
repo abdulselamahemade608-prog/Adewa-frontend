@@ -77,21 +77,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     box-shadow: 0 0 0 0 rgba(79, 140, 255, 0.5);
     animation: pulse 1.8s ease-out infinite, popIn 0.6s ease-out;
     font-size: 40px;
     font-weight: 800;
     color: #fff;
-    overflow: hidden;
   }
 
   .logo-ring img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 50%;
-    display: block;
   }
 
   @keyframes pulse {
@@ -373,105 +371,6 @@
     cursor: pointer;
   }
 
-  .streak-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 6px;
-  }
-
-  .streak-icon { font-size: 26px; }
-  .streak-num { font-size: 18px; font-weight: 800; }
-  .streak-label { font-size: 11px; color: var(--muted); }
-
-  .earn-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 8px;
-  }
-
-  .earn-card-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
-
-  .coin-pill {
-    background: rgba(255, 176, 32, 0.15);
-    color: var(--warning);
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-  }
-
-  .primary-btn {
-    width: 100%;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    padding: 13px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 6px;
-  }
-
-  .primary-btn:disabled { opacity: 0.5; }
-
-  .hint-text {
-    font-size: 12px;
-    color: var(--muted);
-    margin: 6px 2px 14px;
-  }
-
-  .task-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-  }
-
-  .task-card .task-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
-  .task-card .task-desc { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
-  .task-card .task-row { display: flex; justify-content: space-between; align-items: center; }
-
-  .task-btn {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .lb-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 6px;
-    font-size: 13px;
-  }
-
-  .lb-rank { font-weight: 800; color: var(--accent-2); margin-right: 8px; }
-
   /* Bottom nav */
 
   .bottom-nav {
@@ -508,12 +407,7 @@
      ADMIN PANEL
      =================================================== */
 
-  #adminScreen.active {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    padding: 18px;
-  }
+  /* Admin content now lives inside a tab-page — see .tab-page rules above */
 
   .admin-header {
     font-size: 18px;
@@ -583,7 +477,7 @@
 
 <div class="screen active" id="splashScreen">
   <div class="logo-ring" id="logoRing">
-    <img src="logo.png" alt="Adewa" id="logoImg" onerror="this.replaceWith(Object.assign(document.createTextNode('A'), {}))">
+    <img src="logo.png" alt="Adewa" onerror="this.remove(); document.getElementById('logoRing').textContent='A';">
   </div>
   <div class="splash-title">Adewa</div>
   <div class="splash-sub">Welcome to your Mini App</div>
@@ -620,213 +514,127 @@
     <div class="tab-page active" id="page-home">
       <div class="balance-card">
         <div class="balance-label">Total Balance</div>
-        <div class="balance-amount" id="homeBalance">0<span class="unit">ETB</span></div>
+        <div class="balance-amount">0<span class="unit">ETB</span></div>
       </div>
 
-      <div class="streak-row">
-        <div class="streak-icon">🔥</div>
-        <div>
-          <div class="streak-num" id="streakCount">0</div>
-          <div class="streak-label">Day Streak</div>
-        </div>
+      <div class="section-title">Overview</div>
+      <div class="placeholder-card">
+        📊 Home dashboard content coming soon.<br>
+        Earning stats, recent activity, and announcements will appear here.
       </div>
-
-      <div class="section-title">Coin Breakdown</div>
-      <div class="list-card"><div class="label">🎬 From Ads</div><div class="value" id="coinsAds">0</div></div>
-      <div class="list-card"><div class="label">📋 From Tasks</div><div class="value" id="coinsTask">0</div></div>
-      <div class="list-card"><div class="label">👥 From Invites</div><div class="value" id="coinsInvite">0</div></div>
     </div>
 
     <!-- EARN -->
     <div class="tab-page" id="page-earn">
-
-      <div class="section-title">🎬 Watch Ads</div>
-      <div class="earn-card">
-        <div class="earn-card-row">
-          <span id="adsTodayLabel">0 / 10 watched today</span>
-          <span class="coin-pill" id="coinsPerAdLabel">+0 coins</span>
-        </div>
-        <button class="primary-btn" id="watchAdBtn">▶️ Watch Ad</button>
-      </div>
-
-      <div class="section-title">📋 Tasks</div>
-      <div id="tasksList" class="placeholder-card">Loading tasks...</div>
-
-      <div class="section-title">🧩 Surveys &amp; Offers</div>
+      <div class="section-title">Earn</div>
       <div class="placeholder-card">
-        📊 Microtasks, surveys and offerwall items will appear here once the admin adds a provider.
+        💰 Earning tasks will be listed here (ads, tasks, daily bonus, etc).<br>
+        Waiting on the exact earning rules to wire this up.
       </div>
     </div>
 
     <!-- INVITE -->
     <div class="tab-page" id="page-invite">
+      <div class="section-title">Invite Friends</div>
       <div class="list-card">
         <div class="label">Total Invites</div>
         <div class="value" id="inviteCount">0</div>
       </div>
-      <div class="list-card">
-        <div class="label">Qualified Invites</div>
-        <div class="value" id="qualifiedInviteCount">0</div>
-      </div>
-
       <div class="section-title">Your Invite Link</div>
       <div class="invite-link-box">
         <span id="inviteLink">https://t.me/YourBot?start=...</span>
         <button class="copy-btn" id="copyInviteBtn">Copy</button>
       </div>
-
-      <div class="section-title">Have a Promo Code?</div>
-      <div class="admin-action-row">
-        <input class="admin-input" id="promoInput" placeholder="Enter promo code">
-        <button class="admin-btn" style="background:var(--accent);color:#fff;" id="promoBtn">Redeem</button>
+      <div class="section-title">Referral Bonus</div>
+      <div class="placeholder-card">
+        🎁 Referral reward amount not yet defined.
       </div>
-      <div class="hint-text" id="promoMsg"></div>
-
-      <div class="section-title">🏆 Top Inviters</div>
-      <div id="topReferrersList" class="placeholder-card">Loading...</div>
-
-      <div class="section-title">💎 Top Earners</div>
-      <div id="topEarnersList" class="placeholder-card">Loading...</div>
     </div>
 
     <!-- PROFILE -->
     <div class="tab-page" id="page-profile">
       <div class="balance-card">
-        <div class="balance-label">Wallet Balance</div>
-        <div class="balance-amount" id="profileBalance">0<span class="unit">ETB</span></div>
+        <div class="balance-label">Adewa User</div>
+        <div class="balance-amount" id="profileName" style="font-size:20px;">–</div>
+      </div>
+      <div class="section-title">Account</div>
+      <div class="list-card">
+        <div class="label">Telegram ID</div>
+        <div class="value" id="profileId">–</div>
+      </div>
+      <div class="list-card">
+        <div class="label">Username</div>
+        <div class="value" id="profileUsername">–</div>
+      </div>
+      <div class="section-title">Wallet</div>
+      <div class="placeholder-card">
+        💳 Wallet balance and withdrawal not yet defined.
+      </div>
+    </div>
+
+    <!-- ADMIN (tab visible only to admins) -->
+    <div class="tab-page" id="page-admin">
+
+      <div class="section-title">Overview</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="num" id="statTotal">–</div><div class="lbl">Total</div></div>
+        <div class="stat-box"><div class="num" id="statVerified">–</div><div class="lbl">Verified</div></div>
+        <div class="stat-box"><div class="num" id="statBanned">–</div><div class="lbl">Banned</div></div>
       </div>
 
-      <div class="section-title">Withdraw Eligibility</div>
-      <div class="placeholder-card" id="withdrawEligibility">Loading...</div>
-
-      <div class="section-title">Withdraw</div>
+      <div class="section-title">Ban / Unban User</div>
       <div class="admin-action-row">
-        <select class="admin-input" id="withdrawMethod">
-          <option value="BEP20">USDT (BEP20)</option>
-          <option value="TON">TON / USDT Wallet</option>
-        </select>
+        <input class="admin-input" id="adminUserId" type="number" placeholder="Telegram ID">
       </div>
       <div class="admin-action-row">
-        <input class="admin-input" id="withdrawAddress" placeholder="Wallet address">
+        <button class="admin-btn ban" id="banBtn" style="flex:1;">🚫 Ban</button>
+        <button class="admin-btn unban" id="unbanBtn" style="flex:1;">✅ Unban</button>
       </div>
-      <button class="primary-btn" id="withdrawBtn">Request Withdrawal</button>
-      <div class="hint-text" id="withdrawMsg"></div>
 
-      <div class="section-title">Withdrawal History</div>
-      <div id="withdrawHistory" class="placeholder-card">No withdrawals yet.</div>
+      <div class="section-title">Required Channels</div>
+      <div class="admin-action-row">
+        <input class="admin-input" id="channelChatId" type="text" placeholder="@channel_username or -100...">
+      </div>
+      <div class="admin-action-row">
+        <input class="admin-input" id="channelTitle" type="text" placeholder="Display title (e.g. Adewa Official)">
+      </div>
+      <div class="admin-action-row">
+        <input class="admin-input" id="channelInviteLink" type="text" placeholder="Invite link (optional)">
+        <button class="admin-btn unban" id="addChannelBtn">➕ Add</button>
+      </div>
+      <div id="channelsList">Loading channels...</div>
+
+      <div class="section-title">More Tools</div>
+      <div class="placeholder-card">
+        ⚙️ Additional admin tools (broadcast, full user list, etc.) can be added
+        here once you confirm what the previous bot's admin panel supported.
+      </div>
     </div>
 
   </div>
 
   <div class="bottom-nav">
     <button class="nav-btn active" data-page="home">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#4f8cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>
       Home
     </button>
     <button class="nav-btn" data-page="earn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#ffb020" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9 10.5c0-1 1-1.5 3-1.5s3 .8 3 1.8-1 1.5-3 1.7-3 .7-3 1.7 1 1.8 3 1.8 3-.5 3-1.5"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9 10.5c0-1 1-1.5 3-1.5s3 .8 3 1.8-1 1.5-3 1.7-3 .7-3 1.7 1 1.8 3 1.8 3-.5 3-1.5"/></svg>
       Earn
     </button>
     <button class="nav-btn" data-page="invite">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#34c777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Invite
     </button>
     <button class="nav-btn" data-page="profile">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#7c5cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
       Profile
     </button>
+    <button class="nav-btn" id="adminNavBtn" data-page="admin" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+      Admin
+    </button>
   </div>
-
-</div>
-
-<!-- ================= ADMIN PANEL ================= -->
-
-<div class="screen" id="adminScreen">
-
-  <div class="admin-header">Admin Panel</div>
-  <div class="admin-sub">Manage Adewa users and required channels</div>
-
-  <div class="stat-row">
-    <div class="stat-box"><div class="num" id="statTotal">–</div><div class="lbl">Total</div></div>
-    <div class="stat-box"><div class="num" id="statVerified">–</div><div class="lbl">Verified</div></div>
-    <div class="stat-box"><div class="num" id="statBanned">–</div><div class="lbl">Banned</div></div>
-  </div>
-
-  <div class="section-title">Ban / Unban User</div>
-  <div class="admin-action-row">
-    <input class="admin-input" id="adminUserId" type="number" placeholder="Telegram ID">
-  </div>
-  <div class="admin-action-row">
-    <button class="admin-btn ban" id="banBtn" style="flex:1;">🚫 Ban</button>
-    <button class="admin-btn unban" id="unbanBtn" style="flex:1;">✅ Unban</button>
-  </div>
-
-  <div class="section-title">Required Channels</div>
-  <div class="placeholder-card" id="channelsList">Loading channels...</div>
-
-  <div class="section-title">⚙️ Ad &amp; Economy Settings</div>
-  <div class="admin-action-row">
-    <input class="admin-input" id="setDailyAdLimit" type="number" placeholder="Daily ad limit">
-    <input class="admin-input" id="setCoinsPerAd" type="number" placeholder="Coins / ad">
-  </div>
-  <div class="admin-action-row">
-    <input class="admin-input" id="setCoinsPerBirr" type="number" placeholder="Coins per 1 Birr">
-    <input class="admin-input" id="setMinInvites" type="number" placeholder="Min invites to withdraw">
-  </div>
-  <div class="admin-action-row">
-    <button class="admin-btn" style="background:var(--accent);color:#fff;flex:1;" id="saveSettingsBtn">💾 Save Settings</button>
-  </div>
-
-  <div class="section-title">📋 Create Task</div>
-  <div class="admin-action-row">
-    <select class="admin-input" id="taskType">
-      <option value="telegram">Telegram Channel/Group</option>
-      <option value="social">Social Media (proof required)</option>
-    </select>
-  </div>
-  <div class="admin-action-row">
-    <input class="admin-input" id="taskTitle" placeholder="Title (e.g. Join our channel)">
-  </div>
-  <div class="admin-action-row">
-    <input class="admin-input" id="taskTarget" placeholder="Channel @username OR link">
-  </div>
-  <div class="admin-action-row">
-    <input class="admin-input" id="taskDescription" placeholder="Instructions (for social tasks)">
-  </div>
-  <div class="admin-action-row">
-    <input class="admin-input" id="taskReward" type="number" placeholder="Reward coins">
-    <input class="admin-input" id="taskLimit" type="number" placeholder="User limit (0=unlimited)">
-  </div>
-  <div class="admin-action-row">
-    <button class="admin-btn" style="background:var(--success);color:#fff;flex:1;" id="createTaskBtn">➕ Create Task</button>
-  </div>
-  <div id="adminTasksList" class="placeholder-card">Loading tasks...</div>
-
-  <div class="section-title">🕵️ Proof Approvals</div>
-  <div id="adminSubmissionsList" class="placeholder-card">Loading submissions...</div>
-
-  <div class="section-title">🎟️ Promo Codes</div>
-  <div class="admin-action-row">
-    <input class="admin-input" id="promoCode" placeholder="Code (blank = random)">
-    <input class="admin-input" id="promoReward" type="number" placeholder="Reward coins">
-    <input class="admin-input" id="promoMaxUses" type="number" placeholder="Max uses">
-  </div>
-  <div class="admin-action-row">
-    <button class="admin-btn" style="background:var(--accent-2);color:#fff;flex:1;" id="createPromoBtn">🎟️ Generate</button>
-  </div>
-  <div id="adminPromoList" class="placeholder-card">Loading promo codes...</div>
-
-  <div class="section-title">💸 Withdrawal Requests</div>
-  <div id="adminWithdrawalsList" class="placeholder-card">Loading withdrawals...</div>
-
-  <div class="section-title">📢 Broadcast Message</div>
-  <div class="admin-action-row">
-    <input class="admin-input" id="broadcastText" placeholder="Message to send to all users">
-  </div>
-  <div class="admin-action-row">
-    <button class="admin-btn" style="background:var(--warning);color:#111;flex:1;" id="broadcastBtn">📢 Send to All</button>
-  </div>
-  <div class="hint-text" id="broadcastMsg"></div>
 
 </div>
 
@@ -843,8 +651,7 @@ const API_BASE = 'https://adewa.vercel.app';
 const screens = {
   splash: document.getElementById('splashScreen'),
   status: document.getElementById('statusScreen'),
-  app: document.getElementById('appScreen'),
-  admin: document.getElementById('adminScreen')
+  app: document.getElementById('appScreen')
 };
 
 function showScreen(name) {
@@ -1018,268 +825,31 @@ ENTER APP (normal user shell / admin panel)
 
 function enterApp(isAdmin) {
 
-  if (isAdmin) {
-
-    document.getElementById('adminPill').style.display = 'inline-block';
-    showScreen('admin');
-    loadAdminData();
-    return;
-  }
-
   // Build invite link from the Telegram user id, if available
   const inviteLinkEl = document.getElementById('inviteLink');
   if (currentUser?.id) {
     inviteLinkEl.textContent = `https://t.me/YourBot?start=ref_${currentUser.id}`;
   }
 
+  // Fill in the Profile tab
+  document.getElementById('profileName').textContent =
+    currentUser?.first_name || 'Adewa User';
+  document.getElementById('profileId').textContent =
+    currentUser?.id || '–';
+  document.getElementById('profileUsername').textContent =
+    currentUser?.username ? '@' + currentUser.username : '–';
+
+  if (isAdmin) {
+    document.getElementById('adminPill').style.display = 'inline-block';
+    document.getElementById('adminNavBtn').style.display = 'flex';
+  }
+
   showScreen('app');
-  loadUserData();
 }
 
 /*
 =========================================================
-GENERIC HEADERS
-=========================================================
-*/
-
-function userHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    'x-init-data': tg.initData
-  };
-}
-
-async function apiGet(path) {
-  const res = await fetch(API_BASE + path, { headers: userHeaders() });
-  return res.json();
-}
-
-async function apiPost(path, body) {
-  const res = await fetch(API_BASE + path, {
-    method: 'POST',
-    headers: userHeaders(),
-    body: JSON.stringify(body || {})
-  });
-  return res.json();
-}
-
-/*
-=========================================================
-USER: LOAD HOME / EARN / INVITE / PROFILE DATA
-=========================================================
-*/
-
-async function loadUserData() {
-  await Promise.all([
-    loadMe(),
-    loadAdsStatus(),
-    loadTasks(),
-    loadInvite(),
-    loadWithdrawEligibility(),
-    loadWithdrawHistory()
-  ]);
-  apiPost('/api/checkin').catch(() => {});
-}
-
-async function loadMe() {
-  try {
-    const data = await apiGet('/api/me');
-    if (!data.ok) return;
-    const u = data.user;
-
-    document.getElementById('homeBalance').innerHTML = `${u.birr}<span class="unit">ETB</span>`;
-    document.getElementById('profileBalance').innerHTML = `${u.birr}<span class="unit">ETB</span>`;
-    document.getElementById('streakCount').textContent = u.streak_count;
-    document.getElementById('coinsAds').textContent = u.coins_ads;
-    document.getElementById('coinsTask').textContent = u.coins_task;
-    document.getElementById('coinsInvite').textContent = u.coins_invite;
-  } catch (error) {
-    console.error('loadMe error:', error);
-  }
-}
-
-async function loadAdsStatus() {
-  try {
-    const data = await apiGet('/api/ads/status');
-    if (!data.ok) return;
-    document.getElementById('adsTodayLabel').textContent =
-      `${data.viewed_today} / ${data.daily_limit} watched today`;
-    document.getElementById('coinsPerAdLabel').textContent = `+${data.coins_per_ad} coins`;
-    document.getElementById('watchAdBtn').disabled = data.remaining <= 0;
-  } catch (error) {
-    console.error('loadAdsStatus error:', error);
-  }
-}
-
-document.getElementById('watchAdBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('watchAdBtn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Loading ad...';
-
-  // Ad SDK integration point: try AdsGram / Adsbitvex here and only
-  // call /api/ads/watch once the rewarded ad has fully played.
-  try {
-    const data = await apiPost('/api/ads/watch');
-    if (data.ok) {
-      btn.textContent = `✅ +${data.rewarded} coins!`;
-    } else {
-      btn.textContent = data.message || 'No ads available';
-    }
-  } catch (error) {
-    btn.textContent = 'Error, try again';
-  }
-
-  setTimeout(() => {
-    btn.textContent = '▶️ Watch Ad';
-    loadAdsStatus();
-    loadMe();
-  }, 1200);
-});
-
-async function loadTasks() {
-  const listEl = document.getElementById('tasksList');
-  try {
-    const data = await apiGet('/api/tasks');
-    if (!data.ok || data.tasks.length === 0) {
-      listEl.textContent = '🎉 No tasks available right now — check back later!';
-      return;
-    }
-
-    listEl.innerHTML = data.tasks.map((t) => `
-      <div class="task-card">
-        <div class="task-title">${t.type === 'telegram' ? '📢' : '📸'} ${t.title || t.target}</div>
-        ${t.description ? `<div class="task-desc">${t.description}</div>` : ''}
-        <div class="task-row">
-          <span class="coin-pill">+${t.reward_coins} coins</span>
-          <button class="task-btn" onclick="completeTask(${t.id}, '${t.type}')">
-            ${t.type === 'telegram' ? "I've Joined" : 'Submit Proof'}
-          </button>
-        </div>
-      </div>
-    `).join('');
-  } catch (error) {
-    listEl.textContent = 'Could not load tasks.';
-  }
-}
-
-async function completeTask(taskId, type) {
-  let proofNote = '';
-  if (type === 'social') {
-    proofNote = prompt('Describe what you did (also send a screenshot to the bot in DM):') || '';
-  }
-
-  const data = await apiPost(`/api/tasks/${taskId}/complete`, { proof_note: proofNote });
-
-  if (data.ok) {
-    alert(data.status === 'approved' ? `✅ Approved! +${data.rewarded} coins` : '📩 Submitted for admin review.');
-  } else {
-    alert(data.message || 'Could not complete task.');
-  }
-
-  loadTasks();
-  loadMe();
-}
-
-async function loadInvite() {
-  try {
-    const stats = await apiGet('/api/invite/stats');
-    if (stats.ok) {
-      document.getElementById('inviteCount').textContent = stats.total_invites;
-      document.getElementById('qualifiedInviteCount').textContent = stats.qualified_invites;
-    }
-
-    const lb = await apiGet('/api/invite/leaderboard');
-    if (lb.ok) {
-      document.getElementById('topReferrersList').innerHTML = lb.top_referrers.length
-        ? lb.top_referrers.map((r, i) => `
-            <div class="lb-row"><span><span class="lb-rank">#${i + 1}</span>${r.first_name || r.username || r.telegram_id}</span><span>${r.coins_invite} coins</span></div>
-          `).join('')
-        : 'No inviters yet.';
-
-      document.getElementById('topEarnersList').innerHTML = lb.top_earners.length
-        ? lb.top_earners.map((r, i) => `
-            <div class="lb-row"><span><span class="lb-rank">#${i + 1}</span>${r.first_name || r.username || r.telegram_id}</span><span>${r.coins_total} coins</span></div>
-          `).join('')
-        : 'No earners yet.';
-    }
-  } catch (error) {
-    console.error('loadInvite error:', error);
-  }
-}
-
-document.getElementById('promoBtn').addEventListener('click', async () => {
-  const code = document.getElementById('promoInput').value.trim();
-  const msgEl = document.getElementById('promoMsg');
-  if (!code) return;
-
-  const data = await apiPost('/api/promo/redeem', { code });
-  msgEl.textContent = data.ok ? `✅ +${data.rewarded} coins added!` : (data.message || 'Invalid code.');
-
-  if (data.ok) {
-    document.getElementById('promoInput').value = '';
-    loadMe();
-  }
-});
-
-async function loadWithdrawEligibility() {
-  const el = document.getElementById('withdrawEligibility');
-  try {
-    const data = await apiGet('/api/withdraw/eligibility');
-    if (!data.ok) return;
-
-    el.innerHTML = data.eligible
-      ? `✅ You're eligible to withdraw! (${data.qualified_invites}/${data.required_invites} qualified invites)`
-      : `🔒 Withdraw needs ${data.required_invites} qualified invites — you have ${data.qualified_invites}.<br>` +
-        `Each invited friend must watch ads on ${data.required_active_days} separate days to count.`;
-
-    document.getElementById('withdrawBtn').disabled = !data.eligible;
-  } catch (error) {
-    console.error('loadWithdrawEligibility error:', error);
-  }
-}
-
-document.getElementById('withdrawBtn').addEventListener('click', async () => {
-  const method = document.getElementById('withdrawMethod').value;
-  const address = document.getElementById('withdrawAddress').value.trim();
-  const msgEl = document.getElementById('withdrawMsg');
-
-  if (!address) { msgEl.textContent = 'Enter a wallet address first.'; return; }
-
-  const data = await apiPost('/api/withdraw', { method, address });
-  msgEl.textContent = data.ok
-    ? `✅ Withdrawal of ${data.birr} ETB submitted!`
-    : (data.message || 'Could not submit withdrawal.');
-
-  if (data.ok) {
-    loadMe();
-    loadWithdrawHistory();
-    loadWithdrawEligibility();
-  }
-});
-
-async function loadWithdrawHistory() {
-  const el = document.getElementById('withdrawHistory');
-  try {
-    const data = await apiGet('/api/withdraw/history');
-    if (!data.ok || data.withdrawals.length === 0) {
-      el.textContent = 'No withdrawals yet.';
-      return;
-    }
-
-    el.innerHTML = data.withdrawals.map((w) => `
-      <div class="list-card">
-        <div class="label">${w.method} · ${w.birr} ETB</div>
-        <div class="value">${w.status}</div>
-      </div>
-    `).join('');
-  } catch (error) {
-    el.textContent = 'Could not load history.';
-  }
-}
-
-/*
-=========================================================
-BOTTOM NAV (Home / Earn / Invite / Wallet)
+BOTTOM NAV (Home / Earn / Invite / Profile / Admin)
 =========================================================
 */
 
@@ -1291,6 +861,10 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
 
     btn.classList.add('active');
     document.getElementById('page-' + btn.dataset.page).classList.add('active');
+
+    if (btn.dataset.page === 'admin') {
+      loadAdminData();
+    }
   });
 });
 
@@ -1335,251 +909,34 @@ async function loadAdminData() {
 
     if (channelsData.ok && channelsData.channels.length > 0) {
       listEl.innerHTML = channelsData.channels
-        .map((c) => `<div class="list-card"><div class="label">${c.title || c.chat_id}</div><div class="value">${c.chat_id}</div></div>`)
+        .map((c) => `
+          <div class="list-card">
+            <div>
+              <div class="label">${c.title || c.chat_id}</div>
+              <div class="value">${c.chat_id}</div>
+            </div>
+            <button class="admin-btn ban" data-remove-id="${c.id}" style="padding:6px 10px;font-size:12px;">✕</button>
+          </div>
+        `)
         .join('');
+
+      listEl.querySelectorAll('[data-remove-id]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          try {
+            await fetch(`${API_BASE}/api/admin/channels/${btn.dataset.removeId}`, { method: 'DELETE', headers: adminHeaders() });
+            loadAdminData();
+          } catch (error) {
+            console.error('Remove channel error:', error);
+          }
+        });
+      });
     } else {
-      listEl.textContent = 'No required channels configured yet.';
+      listEl.innerHTML = '<div class="placeholder-card">No required channels configured yet.</div>';
     }
   } catch (error) {
     console.error('Admin channels load error:', error);
   }
-
-  await Promise.all([
-    loadAdminSettings(),
-    loadAdminTasks(),
-    loadAdminSubmissions(),
-    loadAdminPromo(),
-    loadAdminWithdrawals()
-  ]);
 }
-
-async function adminGet(path) {
-  const res = await fetch(API_BASE + path, { headers: adminHeaders() });
-  return res.json();
-}
-
-async function adminPost(path, body) {
-  const res = await fetch(API_BASE + path, {
-    method: 'POST',
-    headers: adminHeaders(),
-    body: JSON.stringify(body || {})
-  });
-  return res.json();
-}
-
-async function adminDelete(path) {
-  const res = await fetch(API_BASE + path, { method: 'DELETE', headers: adminHeaders() });
-  return res.json();
-}
-
-/*
-=========================================================
-ADMIN: SETTINGS
-=========================================================
-*/
-
-async function loadAdminSettings() {
-  try {
-    const data = await adminGet('/api/admin/settings');
-    if (!data.ok) return;
-    document.getElementById('setDailyAdLimit').value = data.settings.dailyAdLimit;
-    document.getElementById('setCoinsPerAd').value = data.settings.coinsPerAd;
-    document.getElementById('setCoinsPerBirr').value = data.settings.coinsPerBirr;
-    document.getElementById('setMinInvites').value = data.settings.minInvitesForWithdraw;
-  } catch (error) {
-    console.error('loadAdminSettings error:', error);
-  }
-}
-
-document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-  const body = {
-    dailyAdLimit: Number(document.getElementById('setDailyAdLimit').value) || undefined,
-    coinsPerAd: Number(document.getElementById('setCoinsPerAd').value) || undefined,
-    coinsPerBirr: Number(document.getElementById('setCoinsPerBirr').value) || undefined,
-    minInvitesForWithdraw: Number(document.getElementById('setMinInvites').value) || undefined
-  };
-  const data = await adminPost('/api/admin/settings', body);
-  alert(data.ok ? '✅ Settings saved.' : (data.message || 'Failed to save.'));
-});
-
-/*
-=========================================================
-ADMIN: TASKS
-=========================================================
-*/
-
-async function loadAdminTasks() {
-  const el = document.getElementById('adminTasksList');
-  try {
-    const data = await adminGet('/api/admin/tasks');
-    if (!data.ok || data.tasks.length === 0) {
-      el.textContent = 'No tasks created yet.';
-      return;
-    }
-    el.innerHTML = data.tasks.map((t) => `
-      <div class="list-card">
-        <div class="label">${t.active ? '🟢' : '⚪'} ${t.title || t.target} (${t.completed_count}${t.user_limit ? '/' + t.user_limit : ''})</div>
-        <div class="value">
-          <button class="task-btn" style="background:var(--danger);" onclick="deleteAdminTask(${t.id})">Remove</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (error) {
-    el.textContent = 'Could not load tasks.';
-  }
-}
-
-async function deleteAdminTask(id) {
-  await adminDelete(`/api/admin/tasks/${id}`);
-  loadAdminTasks();
-}
-
-document.getElementById('createTaskBtn').addEventListener('click', async () => {
-  const body = {
-    type: document.getElementById('taskType').value,
-    title: document.getElementById('taskTitle').value.trim(),
-    target: document.getElementById('taskTarget').value.trim(),
-    description: document.getElementById('taskDescription').value.trim(),
-    reward_coins: Number(document.getElementById('taskReward').value) || 0,
-    user_limit: Number(document.getElementById('taskLimit').value) || 0
-  };
-
-  if (!body.target) { alert('Enter the channel username or link.'); return; }
-
-  const data = await adminPost('/api/admin/tasks', body);
-  if (data.ok) {
-    ['taskTitle', 'taskTarget', 'taskDescription', 'taskReward', 'taskLimit'].forEach((id) => {
-      document.getElementById(id).value = '';
-    });
-    loadAdminTasks();
-  } else {
-    alert(data.message || 'Could not create task.');
-  }
-});
-
-/*
-=========================================================
-ADMIN: PROOF APPROVALS
-=========================================================
-*/
-
-async function loadAdminSubmissions() {
-  const el = document.getElementById('adminSubmissionsList');
-  try {
-    const data = await adminGet('/api/admin/submissions?status=pending');
-    if (!data.ok || data.submissions.length === 0) {
-      el.textContent = 'No pending submissions.';
-      return;
-    }
-    el.innerHTML = data.submissions.map((s) => `
-      <div class="task-card">
-        <div class="task-title">${s.title}</div>
-        <div class="task-desc">User ${s.telegram_id} · +${s.reward_coins} coins${s.proof_note ? ' · ' + s.proof_note : ''}</div>
-        <div class="task-row">
-          <button class="task-btn" style="background:var(--success);" onclick="decideSubmission(${s.id}, 'approve')">Approve</button>
-          <button class="task-btn" style="background:var(--danger);" onclick="decideSubmission(${s.id}, 'reject')">Reject</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (error) {
-    el.textContent = 'Could not load submissions.';
-  }
-}
-
-async function decideSubmission(id, decision) {
-  await adminPost(`/api/admin/submissions/${id}/decide`, { decision });
-  loadAdminSubmissions();
-}
-
-/*
-=========================================================
-ADMIN: PROMO CODES
-=========================================================
-*/
-
-async function loadAdminPromo() {
-  const el = document.getElementById('adminPromoList');
-  try {
-    const data = await adminGet('/api/admin/promo');
-    if (!data.ok || data.codes.length === 0) {
-      el.textContent = 'No promo codes yet.';
-      return;
-    }
-    el.innerHTML = data.codes.map((c) => `
-      <div class="list-card">
-        <div class="label">${c.code} · +${c.reward_coins}</div>
-        <div class="value">${c.used_count}/${c.max_uses}</div>
-      </div>
-    `).join('');
-  } catch (error) {
-    el.textContent = 'Could not load promo codes.';
-  }
-}
-
-document.getElementById('createPromoBtn').addEventListener('click', async () => {
-  const body = {
-    code: document.getElementById('promoCode').value.trim(),
-    reward_coins: Number(document.getElementById('promoReward').value) || 0,
-    max_uses: Number(document.getElementById('promoMaxUses').value) || 1
-  };
-  const data = await adminPost('/api/admin/promo', body);
-  if (data.ok) {
-    ['promoCode', 'promoReward', 'promoMaxUses'].forEach((id) => { document.getElementById(id).value = ''; });
-    loadAdminPromo();
-  } else {
-    alert(data.message || 'Could not create promo code.');
-  }
-});
-
-/*
-=========================================================
-ADMIN: WITHDRAWALS
-=========================================================
-*/
-
-async function loadAdminWithdrawals() {
-  const el = document.getElementById('adminWithdrawalsList');
-  try {
-    const data = await adminGet('/api/admin/withdrawals?status=pending');
-    if (!data.ok || data.withdrawals.length === 0) {
-      el.textContent = 'No pending withdrawal requests.';
-      return;
-    }
-    el.innerHTML = data.withdrawals.map((w) => `
-      <div class="task-card">
-        <div class="task-title">${w.birr} ETB · ${w.method}</div>
-        <div class="task-desc">User ${w.telegram_id} · ${w.address}</div>
-        <div class="task-row">
-          <button class="task-btn" style="background:var(--success);" onclick="decideWithdrawal(${w.id}, 'paid')">Mark Paid</button>
-          <button class="task-btn" style="background:var(--danger);" onclick="decideWithdrawal(${w.id}, 'rejected')">Reject</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (error) {
-    el.textContent = 'Could not load withdrawals.';
-  }
-}
-
-async function decideWithdrawal(id, decision) {
-  await adminPost(`/api/admin/withdrawals/${id}/decide`, { decision });
-  loadAdminWithdrawals();
-}
-
-/*
-=========================================================
-ADMIN: BROADCAST
-=========================================================
-*/
-
-document.getElementById('broadcastBtn').addEventListener('click', async () => {
-  const text = document.getElementById('broadcastText').value.trim();
-  const msgEl = document.getElementById('broadcastMsg');
-  if (!text) return;
-
-  const data = await adminPost('/api/admin/broadcast', { text });
-  msgEl.textContent = data.ok ? `✅ Sent to ${data.sent}/${data.total} users.` : (data.message || 'Failed to send.');
-  if (data.ok) document.getElementById('broadcastText').value = '';
-});
 
 document.getElementById('banBtn').addEventListener('click', async () => {
 
@@ -1604,6 +961,31 @@ document.getElementById('unbanBtn').addEventListener('click', async () => {
     loadAdminData();
   } catch (error) {
     console.error('Unban error:', error);
+  }
+});
+
+document.getElementById('addChannelBtn').addEventListener('click', async () => {
+
+  const chat_id = document.getElementById('channelChatId').value.trim();
+  const title = document.getElementById('channelTitle').value.trim();
+  const invite_link = document.getElementById('channelInviteLink').value.trim();
+
+  if (!chat_id) return;
+
+  try {
+    await fetch(`${API_BASE}/api/admin/channels`, {
+      method: 'POST',
+      headers: adminHeaders(),
+      body: JSON.stringify({ chat_id, title, invite_link })
+    });
+
+    document.getElementById('channelChatId').value = '';
+    document.getElementById('channelTitle').value = '';
+    document.getElementById('channelInviteLink').value = '';
+
+    loadAdminData();
+  } catch (error) {
+    console.error('Add channel error:', error);
   }
 });
 
