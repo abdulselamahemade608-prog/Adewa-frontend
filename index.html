@@ -1,1004 +1,1052 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Adewa</title>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-
-  :root {
-    --bg: #0f1117;
-    --card-bg: #171a22;
-    --card-bg-2: #1e222c;
-    --border: #262a35;
-    --text: #f2f3f5;
-    --muted: #8b8f9b;
-    --accent: #4f8cff;
-    --accent-2: #7c5cff;
-    --success: #34c777;
-    --danger: #ff4d5e;
-    --warning: #ffb020;
-  }
-
-  * { box-sizing: border-box; }
-
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    overflow-x: hidden;
-  }
-
-  /* ===================================================
-     SCREEN SWITCHER
-     =================================================== */
-
-  .screen {
-    display: none;
-    min-height: 100vh;
-  }
-
-  .screen.active {
-    display: block;
-  }
-
-  /* ===================================================
-     SPLASH SCREEN
-     =================================================== */
-
-  #splashScreen.active {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: radial-gradient(circle at 50% 30%, #1c2436 0%, var(--bg) 70%);
-  }
-
-  .logo-ring {
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    box-shadow: 0 0 0 0 rgba(79, 140, 255, 0.5);
-    animation: pulse 1.8s ease-out infinite, popIn 0.6s ease-out;
-    font-size: 40px;
-    font-weight: 800;
-    color: #fff;
-  }
-
-  .logo-ring img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  @keyframes pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(79, 140, 255, 0.45); }
-    70%  { box-shadow: 0 0 0 22px rgba(79, 140, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(79, 140, 255, 0); }
-  }
-
-  @keyframes popIn {
-    0%   { transform: scale(0.4); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-
-  .splash-title {
-    margin-top: 22px;
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    opacity: 0;
-    animation: fadeUp 0.6s ease-out 0.3s forwards;
-  }
-
-  .splash-sub {
-    margin-top: 6px;
-    font-size: 13px;
-    color: var(--muted);
-    opacity: 0;
-    animation: fadeUp 0.6s ease-out 0.5s forwards;
-  }
-
-  @keyframes fadeUp {
-    0%   { transform: translateY(8px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
-  }
-
-  .splash-dots {
-    margin-top: 26px;
-    display: flex;
-    gap: 6px;
-  }
-
-  .splash-dots span {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--muted);
-    animation: dotBounce 1.2s ease-in-out infinite;
-  }
-
-  .splash-dots span:nth-child(2) { animation-delay: 0.15s; }
-  .splash-dots span:nth-child(3) { animation-delay: 0.3s; }
-
-  @keyframes dotBounce {
-    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-    40%           { transform: translateY(-5px); opacity: 1; }
-  }
-
-  /* ===================================================
-     STATUS SCREEN (verifying / blocked / error states)
-     =================================================== */
-
-  #statusScreen.active {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 20px;
-  }
-
-  .card {
-    width: 100%;
-    max-width: 380px;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 32px 24px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-  }
-
-  .icon-wrap {
-    width: 72px;
-    height: 72px;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(79, 140, 255, 0.12);
-  }
-
-  .icon-wrap.success { background: rgba(52, 199, 119, 0.12); }
-  .icon-wrap.danger  { background: rgba(255, 77, 94, 0.12); }
-  .icon-wrap.warning { background: rgba(255, 176, 32, 0.12); }
-  .icon-wrap.error   { background: rgba(255, 77, 94, 0.12); }
-
-  .icon { width: 34px; height: 34px; }
-
-  .icon-wrap.success .icon { color: var(--success); }
-  .icon-wrap.danger  .icon { color: var(--danger); }
-  .icon-wrap.warning .icon { color: var(--warning); }
-  .icon-wrap.error   .icon { color: var(--danger); }
-
-  .spinner {
-    width: 34px;
-    height: 34px;
-    border: 3px solid rgba(79, 140, 255, 0.25);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .card h2 { margin: 0 0 8px; font-size: 19px; font-weight: 600; }
-
-  .card p.desc {
-    margin: 0;
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .badge {
-    display: inline-block;
-    margin-top: 16px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-  }
-
-  .badge.danger  { background: rgba(255, 77, 94, 0.15); color: var(--danger); }
-  .badge.warning { background: rgba(255, 176, 32, 0.15); color: var(--warning); }
-
-  .retry-btn {
-    margin-top: 20px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    padding: 11px 22px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    display: none;
-  }
-
-  .retry-btn:active { opacity: 0.85; }
-
-  /* ===================================================
-     APP SHELL (Home / Earn / Invite / Wallet)
-     =================================================== */
-
-  #appScreen.active {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    padding-bottom: 78px;
-  }
-
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 18px 10px;
-  }
-
-  .topbar-title {
-    font-size: 18px;
-    font-weight: 700;
-  }
-
-  .topbar-title span { color: var(--accent); }
-
-  .admin-pill {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 5px 10px;
-    border-radius: 999px;
-    background: rgba(124, 92, 255, 0.15);
-    color: var(--accent-2);
-    letter-spacing: 0.3px;
-  }
-
-  .tab-content {
-    flex: 1;
-    padding: 6px 18px 18px;
-  }
-
-  .tab-page { display: none; }
-  .tab-page.active { display: block; animation: fadeUp 0.25s ease-out; }
-
-  .balance-card {
-    background: linear-gradient(135deg, #1c2b4f, #2a1f4f);
-    border-radius: 18px;
-    padding: 22px;
-    margin-bottom: 18px;
-    border: 1px solid var(--border);
-  }
-
-  .balance-label {
-    font-size: 12px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .balance-amount {
-    font-size: 30px;
-    font-weight: 800;
-    margin-top: 6px;
-  }
-
-  .balance-amount .unit {
-    font-size: 15px;
-    color: var(--muted);
-    font-weight: 600;
-    margin-left: 6px;
-  }
-
-  .section-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 18px 0 10px;
-  }
-
-  .placeholder-card {
-    background: var(--card-bg);
-    border: 1px dashed var(--border);
-    border-radius: 14px;
-    padding: 20px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  .list-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
-  .list-card .label { font-size: 14px; font-weight: 600; }
-  .list-card .value { font-size: 13px; color: var(--muted); }
-
-  .invite-link-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--card-bg-2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 12px;
-    font-size: 12px;
-    color: var(--muted);
-    word-break: break-all;
-  }
-
-  .copy-btn {
-    flex-shrink: 0;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  /* Bottom nav */
-
-  .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    background: var(--card-bg);
-    border-top: 1px solid var(--border);
-    padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .nav-btn {
-    flex: 1;
-    background: none;
-    border: none;
-    color: var(--muted);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 6px 0;
-    cursor: pointer;
-  }
-
-  .nav-btn svg { width: 22px; height: 22px; }
-
-  .nav-btn.active { color: var(--accent); }
-
-  /* ===================================================
-     ADMIN PANEL
-     =================================================== */
-
-  /* Admin content now lives inside a tab-page — see .tab-page rules above */
-
-  .admin-header {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .admin-sub {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 18px;
-  }
-
-  .stat-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-
-  .stat-box {
-    flex: 1;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px;
-    text-align: center;
-  }
-
-  .stat-box .num { font-size: 20px; font-weight: 800; }
-  .stat-box .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-  .admin-action-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-
-  .admin-input {
-    flex: 1;
-    background: var(--card-bg-2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    color: var(--text);
-    font-size: 13px;
-  }
-
-  .admin-btn {
-    border: none;
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .admin-btn.ban { background: var(--danger); color: #fff; }
-  .admin-btn.unban { background: var(--success); color: #fff; }
-
+:root{
+  --bg:#0b0d10; --s1:#12151a; --s2:#181c22; --s3:#20252d; --line:#252b34;
+  --text:#eef1f5; --mut:#8b95a5; --dim:#5c6572;
+  --blue:#4da3ff; --green:#34d27f; --violet:#a08bff; --amber:#ffb53d;
+  --rose:#ff6b85; --teal:#2dd4c4; --orange:#ff8a4a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Ethiopic","Helvetica Neue",Arial,sans-serif;
+  font-variant-numeric:tabular-nums;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,p{margin:0}
+
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+.center{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+
+/* ---------- splash ---------- */
+.logo-wrap{position:relative;width:108px;height:108px;border-radius:50%;background:var(--blue);
+  display:grid;place-items:center;font-size:44px;font-weight:800;color:#fff;
+  animation:pop .6s cubic-bezier(.2,.9,.3,1.2) both, ring 2s ease-out .6s infinite}
+.logo-wrap img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;background:var(--bg)}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(77,163,255,.45)}70%{box-shadow:0 0 0 24px rgba(77,163,255,0)}100%{box-shadow:0 0 0 0 rgba(77,163,255,0)}}
+.splash-title{margin-top:24px;font-size:24px;font-weight:700;letter-spacing:.3px;opacity:0;animation:up .6s ease .35s forwards}
+.splash-sub{margin-top:6px;color:var(--mut);font-size:13px;opacity:0;animation:up .6s ease .55s forwards}
+@keyframes up{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+.dots{display:flex;gap:6px;margin-top:28px}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--dim);animation:bounce 1.2s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:none;opacity:.4}40%{transform:translateY(-5px);opacity:1}}
+
+/* ---------- status ---------- */
+.status-card{width:100%;max-width:360px;background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:30px 22px}
+.status-card .ico{width:64px;height:64px;border-radius:50%;margin:0 auto 18px}
+.status-card .ico svg{width:30px;height:30px}
+.status-card h2{font-size:19px;margin-bottom:8px}
+.status-card p{color:var(--mut);font-size:14px}
+.spin{width:30px;height:30px;border:3px solid rgba(77,163,255,.2);border-top-color:var(--blue);border-radius:50%;animation:rot .8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ---------- shared ---------- */
+.ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none}
+.ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:32px;height:32px;border-radius:10px}.ico.sm svg{width:16px;height:16px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:16px}
+.card+.card{margin-top:12px}
+.row{display:flex;align-items:center;gap:12px}
+.grow{flex:1;min-width:0}
+.between{justify-content:space-between}
+.h{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:700;margin:24px 4px 10px}
+.mut{color:var(--mut)}.sm{font-size:13px}.xs{font-size:12px}
+.b{font-weight:700}
+.clip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empty{color:var(--mut);text-align:center;padding:28px 12px;font-size:14px}
+.chip{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--s3);color:var(--mut)}
+.chip.green{background:rgba(52,210,127,.14);color:var(--green)}
+.chip.amber{background:rgba(255,181,61,.14);color:var(--amber)}
+.chip.rose{background:rgba(255,107,133,.14);color:var(--rose)}
+.chip.blue{background:rgba(77,163,255,.14);color:var(--blue)}
+
+.btn{height:44px;border:0;border-radius:12px;padding:0 18px;font-weight:700;font-size:14px;color:#0b0d10;background:var(--blue);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:transform .08s,opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn.block{width:100%}
+.btn.green{background:var(--green)}.btn.violet{background:var(--violet)}.btn.amber{background:var(--amber)}
+.btn.rose{background:var(--rose)}.btn.orange{background:var(--orange)}
+.btn.ghost{background:var(--s3);color:var(--text)}
+.btn.s{height:36px;padding:0 14px;font-size:13px;border-radius:10px}
+.btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.inp{width:100%;height:44px;background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:0 14px;outline:0}
+.inp:focus{border-color:var(--blue)}
+textarea.inp{height:auto;min-height:96px;padding:12px 14px;resize:vertical}
+select.inp{appearance:none}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--mut);margin:0 2px 6px;font-weight:600}
+.field .hint{font-size:11.5px;color:var(--dim);margin:5px 2px 0}
+
+.seg{display:flex;background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;height:36px;border:0;background:none;border-radius:9px;color:var(--mut);font-weight:700;font-size:13px;cursor:pointer}
+.seg button.on{background:var(--s3);color:var(--text)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--s1);color:var(--mut);font-weight:700;font-size:13px;cursor:pointer}
+.chips button.on{background:var(--rose);border-color:var(--rose);color:#0b0d10}
+
+/* ---------- app shell ---------- */
+#app{padding-bottom:86px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 6px;
+  padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.2px}
+.brand .lg{position:relative;width:30px;height:30px;border-radius:50%;background:var(--blue);display:grid;place-items:center;font-size:14px;color:#fff}
+.brand .lg img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;background:var(--bg)}
+.pill{font-size:11px;font-weight:800;letter-spacing:.06em;padding:5px 10px;border-radius:999px;background:rgba(255,107,133,.14);color:var(--rose)}
+.pages{padding:6px 16px 20px;max-width:520px;margin:0 auto}
+.page{display:none}.page.active{display:block;animation:up .22s ease}
+
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(18,21,26,.96);border-top:1px solid var(--line);
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));backdrop-filter:blur(10px);z-index:20}
+.nav button{flex:1;border:0;background:none;color:var(--dim);display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:6px 0;cursor:pointer}
+.nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav button.on{color:var(--c)}
+
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);max-width:88%;
+  background:var(--s3);border:1px solid var(--line);border-left:3px solid var(--blue);padding:11px 16px;border-radius:12px;font-size:13.5px;font-weight:600;
+  z-index:50;transition:transform .28s cubic-bezier(.2,.9,.3,1.1);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.toast.show{transform:translate(-50%,0)}
+.toast.ok{border-left-color:var(--green)}.toast.err{border-left-color:var(--rose)}
+
+/* ---------- home ---------- */
+.bal{position:relative;overflow:hidden}
+.bal::after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,181,61,.16),transparent 70%)}
+.bal .lbl{font-size:12px;color:var(--mut);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.bal .big{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:38px;font-weight:800;letter-spacing:-.5px}
+.bal .big svg{width:32px;height:32px}
+.bal .sub{margin-top:6px;color:var(--mut);font-size:13px}
+.streak-bar{display:flex;gap:5px;margin-top:14px}
+.streak-bar i{flex:1;height:6px;border-radius:3px;background:var(--s3)}
+.streak-bar i.on{background:var(--orange)}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}
+.stat b{display:block;font-size:19px}.stat span{font-size:11px;color:var(--mut)}
+.wheel-box{position:relative;width:210px;height:210px;margin:6px auto 16px}
+.wheel-box svg{width:100%;height:100%;overflow:visible}
+.wheel-box .ptr{position:absolute;left:50%;top:-8px;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:16px solid var(--text);z-index:2;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+.winner{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.winner:last-child{border-bottom:0}
+
+/* ---------- earn ---------- */
+.ringbox{position:relative;width:150px;height:150px;margin:8px auto 14px}
+.ring{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--s3);stroke-width:9}
+.ring-fg{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .6s ease}
+.ringbox .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ringbox .mid b{font-size:30px;line-height:1}.ringbox .mid span{font-size:11.5px;color:var(--mut);margin-top:4px}
+.task{display:flex;gap:12px;align-items:flex-start}
+.task .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.task .acts{display:flex;gap:8px;margin-top:12px}
+.task .acts .btn{flex:1}
+
+/* ---------- invite / profile ---------- */
+.linkbox{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 12px}
+.linkbox span{flex:1;min-width:0;font-size:12.5px;color:var(--mut)}
+.lb{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.lb:last-child{border-bottom:0}
+.rank{width:26px;height:26px;border-radius:8px;background:var(--s3);display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--mut);flex:none}
+.rank.r1{background:rgba(255,181,61,.18);color:var(--amber)}.rank.r2{background:rgba(160,139,255,.18);color:var(--violet)}.rank.r3{background:rgba(255,138,74,.18);color:var(--orange)}
+.avatar{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:800;color:#0b0d10;margin:0 auto 10px}
+.req{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.req:last-child{border-bottom:0}
+.bar{height:6px;border-radius:3px;background:var(--s3);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--green)}
+
+/* ---------- admin ---------- */
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.proofimg{width:100%;border-radius:10px;margin-top:10px;background:var(--s2)}
+.addr{word-break:break-all;font-size:12.5px;background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px}
 </style>
-
 </head>
 
 <body>
 
-<!-- ================= SPLASH ================= -->
-
-<div class="screen active" id="splashScreen">
-  <div class="logo-ring" id="logoRing">
-    <img src="logo.png" alt="Adewa" onerror="this.remove(); document.getElementById('logoRing').textContent='A';">
-  </div>
-  <div class="splash-title">Adewa</div>
-  <div class="splash-sub">Welcome to your Mini App</div>
-  <div class="splash-dots"><span></span><span></span><span></span></div>
-</div>
-
-<!-- ================= STATUS (verifying / blocked / error) ================= -->
-
-<div class="screen" id="statusScreen">
-  <div class="card">
-    <div class="icon-wrap" id="iconWrap">
-      <div class="spinner" id="spinner"></div>
-      <div class="icon" id="icon" style="display:none;"></div>
-    </div>
-    <h2 id="title">Checking your account</h2>
-    <p class="desc" id="desc">Please wait a moment...</p>
-    <span class="badge" id="badge" style="display:none;"></span>
-    <button class="retry-btn" id="retryBtn">Try Again</button>
+<!-- ============ SPLASH ============ -->
+<div class="screen active" id="splash">
+  <div class="center">
+    <div class="logo-wrap">A<img src="logo.png" alt="Adewa" onerror="this.remove()"></div>
+    <div class="splash-title">Adewa</div>
+    <div class="splash-sub">Welcome to your Mini App</div>
+    <div class="dots"><span></span><span></span><span></span></div>
   </div>
 </div>
 
-<!-- ================= APP (normal user) ================= -->
-
-<div class="screen" id="appScreen">
-
-  <div class="topbar">
-    <div class="topbar-title">Ade<span>wa</span></div>
-    <div class="admin-pill" id="adminPill" style="display:none;">ADMIN</div>
+<!-- ============ STATUS ============ -->
+<div class="screen" id="status">
+  <div class="center">
+    <div class="status-card">
+      <div class="ico" id="stIcon"></div>
+      <h2 id="stTitle"></h2>
+      <p id="stDesc"></p>
+      <div id="stBadge" style="margin-top:16px"></div>
+      <button class="btn block" id="stRetry" style="margin-top:18px;display:none" data-act="retry">Try again</button>
+    </div>
   </div>
-
-  <div class="tab-content">
-
-    <!-- HOME -->
-    <div class="tab-page active" id="page-home">
-      <div class="balance-card">
-        <div class="balance-label">Total Balance</div>
-        <div class="balance-amount">0<span class="unit">ETB</span></div>
-      </div>
-
-      <div class="section-title">Overview</div>
-      <div class="placeholder-card">
-        📊 Home dashboard content coming soon.<br>
-        Earning stats, recent activity, and announcements will appear here.
-      </div>
-    </div>
-
-    <!-- EARN -->
-    <div class="tab-page" id="page-earn">
-      <div class="section-title">Earn</div>
-      <div class="placeholder-card">
-        💰 Earning tasks will be listed here (ads, tasks, daily bonus, etc).<br>
-        Waiting on the exact earning rules to wire this up.
-      </div>
-    </div>
-
-    <!-- INVITE -->
-    <div class="tab-page" id="page-invite">
-      <div class="section-title">Invite Friends</div>
-      <div class="list-card">
-        <div class="label">Total Invites</div>
-        <div class="value" id="inviteCount">0</div>
-      </div>
-      <div class="section-title">Your Invite Link</div>
-      <div class="invite-link-box">
-        <span id="inviteLink">https://t.me/YourBot?start=...</span>
-        <button class="copy-btn" id="copyInviteBtn">Copy</button>
-      </div>
-      <div class="section-title">Referral Bonus</div>
-      <div class="placeholder-card">
-        🎁 Referral reward amount not yet defined.
-      </div>
-    </div>
-
-    <!-- PROFILE -->
-    <div class="tab-page" id="page-profile">
-      <div class="balance-card">
-        <div class="balance-label">Adewa User</div>
-        <div class="balance-amount" id="profileName" style="font-size:20px;">–</div>
-      </div>
-      <div class="section-title">Account</div>
-      <div class="list-card">
-        <div class="label">Telegram ID</div>
-        <div class="value" id="profileId">–</div>
-      </div>
-      <div class="list-card">
-        <div class="label">Username</div>
-        <div class="value" id="profileUsername">–</div>
-      </div>
-      <div class="section-title">Wallet</div>
-      <div class="placeholder-card">
-        💳 Wallet balance and withdrawal not yet defined.
-      </div>
-    </div>
-
-    <!-- ADMIN (tab visible only to admins) -->
-    <div class="tab-page" id="page-admin">
-
-      <div class="section-title">Overview</div>
-      <div class="stat-row">
-        <div class="stat-box"><div class="num" id="statTotal">–</div><div class="lbl">Total</div></div>
-        <div class="stat-box"><div class="num" id="statVerified">–</div><div class="lbl">Verified</div></div>
-        <div class="stat-box"><div class="num" id="statBanned">–</div><div class="lbl">Banned</div></div>
-      </div>
-
-      <div class="section-title">Ban / Unban User</div>
-      <div class="admin-action-row">
-        <input class="admin-input" id="adminUserId" type="number" placeholder="Telegram ID">
-      </div>
-      <div class="admin-action-row">
-        <button class="admin-btn ban" id="banBtn" style="flex:1;">🚫 Ban</button>
-        <button class="admin-btn unban" id="unbanBtn" style="flex:1;">✅ Unban</button>
-      </div>
-
-      <div class="section-title">Required Channels</div>
-      <div class="admin-action-row">
-        <input class="admin-input" id="channelChatId" type="text" placeholder="@channel_username or -100...">
-      </div>
-      <div class="admin-action-row">
-        <input class="admin-input" id="channelTitle" type="text" placeholder="Display title (e.g. Adewa Official)">
-      </div>
-      <div class="admin-action-row">
-        <input class="admin-input" id="channelInviteLink" type="text" placeholder="Invite link (optional)">
-        <button class="admin-btn unban" id="addChannelBtn">➕ Add</button>
-      </div>
-      <div id="channelsList">Loading channels...</div>
-
-      <div class="section-title">More Tools</div>
-      <div class="placeholder-card">
-        ⚙️ Additional admin tools (broadcast, full user list, etc.) can be added
-        here once you confirm what the previous bot's admin panel supported.
-      </div>
-    </div>
-
-  </div>
-
-  <div class="bottom-nav">
-    <button class="nav-btn active" data-page="home">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>
-      Home
-    </button>
-    <button class="nav-btn" data-page="earn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9 10.5c0-1 1-1.5 3-1.5s3 .8 3 1.8-1 1.5-3 1.7-3 .7-3 1.7 1 1.8 3 1.8 3-.5 3-1.5"/></svg>
-      Earn
-    </button>
-    <button class="nav-btn" data-page="invite">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Invite
-    </button>
-    <button class="nav-btn" data-page="profile">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
-      Profile
-    </button>
-    <button class="nav-btn" id="adminNavBtn" data-page="admin" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
-      Admin
-    </button>
-  </div>
-
 </div>
+
+<!-- ============ APP ============ -->
+<div class="screen" id="app">
+  <div class="top">
+    <div class="brand"><span class="lg">A<img src="logo.png" alt="" onerror="this.remove()"></span>Adewa</div>
+    <span class="pill" id="adminPill" style="display:none">ADMIN</span>
+  </div>
+
+  <div class="pages">
+    <div class="page active" id="page-home"></div>
+    <div class="page" id="page-earn"></div>
+    <div class="page" id="page-invite"></div>
+    <div class="page" id="page-profile"></div>
+    <div class="page" id="page-admin"></div>
+  </div>
+
+  <div class="nav" id="nav"></div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
+'use strict';
 
-const tg = (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp)
-  ? window.Telegram.WebApp
-  : null;
+/* =========================================================
+   BASICS
+   ========================================================= */
 
-if (tg) { tg.ready(); tg.expand(); }
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+try { if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#0b0d10'); tg.setBackgroundColor('#0b0d10'); } } catch (e) {}
 
-const API_BASE = 'https://adewa.vercel.app';
+const API = 'https://adewa.vercel.app';
+const $ = (s, r = document) => r.querySelector(s);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const fmt = (n) => Number(n || 0).toLocaleString('en-US');
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-const screens = {
-  splash: document.getElementById('splashScreen'),
-  status: document.getElementById('statusScreen'),
-  app: document.getElementById('appScreen')
-};
+const C = { blue: '#4da3ff', green: '#34d27f', violet: '#a08bff', amber: '#ffb53d', rose: '#ff6b85', teal: '#2dd4c4', orange: '#ff8a4a' };
 
-function showScreen(name) {
-  Object.values(screens).forEach((el) => el.classList.remove('active'));
-  screens[name].classList.add('active');
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
 }
 
-/*
-=========================================================
-ICONS
-=========================================================
-*/
-
-const ICONS = {
-  shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>`,
-  users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
-  warning: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.29 3.86-8.18 14.14A1.5 1.5 0 0 0 3.4 20.5h17.2a1.5 1.5 0 0 0 1.3-2.5L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`,
-  xCircle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>`,
-  wifiOff: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="22" y1="2" y2="22"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 13a10 10 0 0 1 5.24-2.76"/><line x1="12" x2="12.01" y1="20" y2="20"/></svg>`
+/* ---------- icon set (stroke icons, each used in its own colour) ---------- */
+const P = {
+  home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
+  coin: '<circle cx="12" cy="12" r="9"/><path d="M14.6 9.2c-.5-.8-1.5-1.3-2.6-1.3-1.5 0-2.6.8-2.6 2 0 2.8 5.4 1.2 5.4 4.1 0 1.2-1.2 2.1-2.8 2.1-1.2 0-2.2-.5-2.8-1.4M12 6.2v1.7m0 8.2v1.7"/>',
+  earn: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10.2c0-1 1.3-1.7 3-1.7s3 .7 3 1.8c0 2.5-6 1.2-6 3.8 0 1.1 1.3 1.9 3 1.9s3-.8 3-1.8"/>',
+  play: '<circle cx="12" cy="12" r="9"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/>',
+  megaphone: '<path d="m3 11 18-5v12L3 14z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
+  clipboard: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/>',
+  checksq: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/>',
+  gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+  wallet: '<path d="M19 7V5a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v3"/><path d="M3 6v12a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-3"/><path d="M21 12h-4a2 2 0 0 0 0 4h4z"/>',
+  flame: '<path d="M12 22a7 7 0 0 0 7-7c0-3-1.5-5-3-7-.5 2-2 3-3 3 0-3-1-6-4-8 .5 4-4 6-4 12a7 7 0 0 0 7 7z"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  shieldx: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9.5 9.5 5 5M14.5 9.5l-5 5"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>',
+  copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+  ticket: '<path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 1 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M13 5v14" stroke-dasharray="2 3"/>',
+  sliders: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+  send: '<path d="m22 2-11 11M22 2l-7 20-4-9-9-4z"/>',
+  image: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-8 8"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  trash: '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
+  arrow: '<path d="M7 17 17 7M8 7h9v9"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  xcircle: '<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/>',
+  alert: '<path d="m10.3 3.9-8.2 14.1A1.5 1.5 0 0 0 3.4 20.5h17.2a1.5 1.5 0 0 0 1.3-2.5L13.7 3.9a1.5 1.5 0 0 0-2.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  wifi: '<path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 4.2-2.7M10.7 5a15 15 0 0 1 11.3 3.8M16.9 11.3a10 10 0 0 1 2.2 1.7M5 13a10 10 0 0 1 5.2-2.8M12 20h.01"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'
 };
 
-const statusEls = {
-  iconWrap: document.getElementById('iconWrap'),
-  spinner: document.getElementById('spinner'),
-  icon: document.getElementById('icon'),
-  title: document.getElementById('title'),
-  desc: document.getElementById('desc'),
-  badge: document.getElementById('badge'),
-  retryBtn: document.getElementById('retryBtn')
-};
+const svg = (n) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + P[n] + '</svg>';
+const ico = (n, color, cls) => '<span class="ico ' + (cls || '') + '" style="color:' + color + ';background:' + hexA(color, 0.14) + '">' + svg(n) + '</span>';
 
-function setStatus(type, { icon, title, desc, badge } = {}) {
-
-  showScreen('status');
-
-  statusEls.spinner.style.display = (type === 'loading') ? 'block' : 'none';
-  statusEls.icon.style.display = (type === 'loading') ? 'none' : 'block';
-
-  statusEls.iconWrap.className = 'icon-wrap' + (type !== 'loading' ? ' ' + type : '');
-
-  if (icon) statusEls.icon.innerHTML = ICONS[icon] || '';
-  if (title) statusEls.title.textContent = title;
-  if (desc) statusEls.desc.textContent = desc;
-
-  if (badge) {
-    statusEls.badge.textContent = badge;
-    statusEls.badge.className = 'badge ' + type;
-    statusEls.badge.style.display = 'inline-block';
-  } else {
-    statusEls.badge.style.display = 'none';
-  }
-
-  statusEls.retryBtn.style.display = (type === 'error') ? 'inline-block' : 'none';
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg, kind) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (kind || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3200);
 }
 
-/*
-=========================================================
-DEVICE ID
-=========================================================
-*/
-
-let deviceId = localStorage.getItem('device_installation_id');
+/* ---------- misc helpers ---------- */
+let deviceId = null;
+try { deviceId = localStorage.getItem('device_installation_id'); } catch (e) {}
 if (!deviceId) {
-  deviceId = crypto.randomUUID();
-  localStorage.setItem('device_installation_id', deviceId);
+  deviceId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  try { localStorage.setItem('device_installation_id', deviceId); } catch (e) {}
 }
 
-/*
-=========================================================
-BAN REASON TEXT
-=========================================================
-*/
+function fetchT(url, opt, ms) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ms);
+  return fetch(url, Object.assign({}, opt, { signal: ctl.signal })).finally(() => clearTimeout(timer));
+}
+
+const hdr = () => ({ 'Content-Type': 'application/json', 'x-init-data': tg ? tg.initData : '', 'x-device': deviceId });
+
+async function api(path, o) {
+  o = o || {};
+  const res = await fetchT(API + path, { method: o.method || 'GET', headers: hdr(), body: o.body ? JSON.stringify(o.body) : undefined }, 20000);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.ok === false) throw new Error(data.message || 'Request failed');
+  return data;
+}
+
+function openUrl(u) {
+  if (!u) return;
+  if (tg) { /^https:\/\/t\.me\//.test(u) ? tg.openTelegramLink(u) : tg.openLink(u); }
+  else window.open(u, '_blank');
+}
+
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) {
+    const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select();
+    try { document.execCommand('copy'); } catch (e2) {} a.remove();
+  }
+  toast('Copied', 'ok');
+}
+
+function timeAgo(iso) {
+  const s = Math.max(1, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+
+function loadScript(src) {
+  loadScript.c = loadScript.c || {};
+  if (!loadScript.c[src]) {
+    loadScript.c[src] = new Promise((ok, no) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = ok; s.onerror = () => no(new Error('Could not load ' + src));
+      document.head.appendChild(s);
+    });
+  }
+  return loadScript.c[src];
+}
+
+/* =========================================================
+   SCREENS + STATUS
+   ========================================================= */
+
+const scr = { splash: $('#splash'), status: $('#status'), app: $('#app') };
+function show(n) { Object.values(scr).forEach((e) => e.classList.remove('active')); scr[n].classList.add('active'); }
+
+function setStatus(o) {
+  show('status');
+  const color = { danger: C.rose, warning: C.amber, error: C.rose, loading: C.blue }[o.type] || C.blue;
+  const box = $('#stIcon');
+  box.style.color = color;
+  box.style.background = hexA(color, 0.14);
+  box.innerHTML = o.type === 'loading' ? '<div class="spin"></div>' : svg(o.icon);
+  $('#stTitle').textContent = o.title || '';
+  $('#stDesc').textContent = o.desc || '';
+  $('#stBadge').innerHTML = o.badge ? '<span class="chip ' + (o.type === 'warning' ? 'amber' : 'rose') + '">' + esc(o.badge) + '</span>' : '';
+  $('#stRetry').style.display = o.retry ? 'flex' : 'none';
+}
 
 function describeBan(reason) {
   const r = String(reason || '').toLowerCase();
-
   if (r.includes('vpn') || r.includes('proxy') || r.includes('tor')) {
-    return { icon: 'shield', title: 'Access Blocked', desc: 'A VPN or proxy connection was detected. Please disable it and use a normal network to continue.', badge: 'VPN / PROXY DETECTED' };
+    return { type: 'danger', icon: 'shieldx', title: 'Access blocked', desc: 'A VPN or proxy connection was detected. Your account has been permanently banned.', badge: 'VPN / PROXY DETECTED' };
   }
   if (r.includes('multiple') || r.includes('same device') || r.includes('same ip')) {
-    return { icon: 'users', title: 'Access Blocked', desc: 'Multiple Telegram accounts were detected from this device or network. Only one account is allowed.', badge: 'MULTIPLE ACCOUNTS DETECTED' };
+    return { type: 'danger', icon: 'users', title: 'Access blocked', desc: 'Multiple Telegram accounts were detected from this device or network. Only one account is allowed.', badge: 'MULTIPLE ACCOUNTS DETECTED' };
   }
-  return { icon: 'shield', title: 'Account Banned', desc: 'Your account has been permanently banned from Adewa.', badge: 'BANNED' };
+  return { type: 'danger', icon: 'ban', title: 'Account banned', desc: 'Your account has been permanently banned from Adewa.', badge: 'BANNED' };
 }
 
-function fetchWithTimeout(url, options, timeoutMs) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
-}
+/* =========================================================
+   STATE + AUTH + BOOT
+   ========================================================= */
 
-/*
-=========================================================
-AUTHENTICATE
-=========================================================
-*/
-
-let currentUser = null;
+const S = { me: null, page: 'home', earnTab: 'ads', invTab: 'mine', adminTab: 'overview', tasks: [], lb: null, winners: [], wd: [] };
 
 async function authenticate() {
-
-  setStatus('loading', { title: 'Checking your account', desc: 'Please wait a moment...' });
-
-  if (!tg) {
-    setStatus('warning', { icon: 'warning', title: 'Open in Telegram', desc: 'This page must be opened as a Telegram Mini App, not in a regular browser.' });
-    return;
+  if (!tg || !tg.initData) {
+    return { status: { type: 'warning', icon: 'alert', title: 'Open in Telegram', desc: 'This app must be opened from inside Telegram.' } };
   }
-
-  const initData = tg.initData;
-
-  if (!initData) {
-    setStatus('warning', { icon: 'warning', title: 'Open in Telegram', desc: 'This app must be opened from inside Telegram.' });
-    return;
-  }
-
   try {
-
-    const response = await fetchWithTimeout(
-      API_BASE + '/api/auth',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-init-data': initData,
-          'x-device': deviceId
-        }
-      },
-      15000
-    );
-
-    const data = await response.json();
-
-    if (data.status === 'banned') {
-      setStatus('danger', describeBan(data.reason));
-      return;
-    }
-
-    if (data.ok && data.status === 'verified') {
-
-      currentUser = tg.initDataUnsafe?.user || null;
-
-      enterApp(data.admin === true);
-      return;
-    }
-
-    setStatus('error', { icon: 'xCircle', title: 'Verification Failed', desc: data.message || 'Something went wrong. Please try again.' });
-
-  } catch (error) {
-
-    console.error(error);
-    const timedOut = (error.name === 'AbortError');
-
-    setStatus('error', {
-      icon: 'wifiOff',
-      title: timedOut ? 'Connection Timed Out' : 'Connection Error',
-      desc: timedOut
-        ? 'The server took too long to respond. Check your connection and try again.'
-        : 'Could not reach the server. Please try again.'
-    });
+    const res = await fetchT(API + '/api/auth', { method: 'POST', headers: hdr() }, 15000);
+    const d = await res.json();
+    if (d.status === 'banned') return { status: describeBan(d.reason) };
+    if (d.ok && d.status === 'verified') return { ok: true, admin: d.admin === true };
+    return { status: { type: 'error', icon: 'xcircle', title: 'Verification failed', desc: d.message || 'Something went wrong.', retry: true } };
+  } catch (e) {
+    const t = e.name === 'AbortError';
+    return { status: { type: 'error', icon: 'wifi', title: t ? 'Connection timed out' : 'Connection error', desc: t ? 'The server took too long to respond.' : 'Could not reach the server.', retry: true } };
   }
 }
 
-document.getElementById('retryBtn').addEventListener('click', authenticate);
+async function loadMe() { S.me = await api('/api/me'); }
 
-/*
-=========================================================
-ENTER APP (normal user shell / admin panel)
-=========================================================
-*/
+async function boot() {
+  show('splash');
+  const parts = await Promise.all([authenticate(), sleep(1700)]);
+  const r = parts[0];
+  if (!r.ok) return setStatus(r.status);
+  try { await loadMe(); }
+  catch (e) { return setStatus({ type: 'error', icon: 'wifi', title: 'Could not load your account', desc: e.message, retry: true }); }
+  enterApp(r.admin);
+}
+
+/* =========================================================
+   NAV
+   ========================================================= */
+
+const TABS = [
+  { id: 'home', label: 'Home', icon: 'home', color: C.blue },
+  { id: 'earn', label: 'Earn', icon: 'earn', color: C.green },
+  { id: 'invite', label: 'Invite', icon: 'users', color: C.violet },
+  { id: 'profile', label: 'Profile', icon: 'user', color: C.amber },
+  { id: 'admin', label: 'Admin', icon: 'shield', color: C.rose, admin: true }
+];
 
 function enterApp(isAdmin) {
-
-  // Build invite link from the Telegram user id, if available
-  const inviteLinkEl = document.getElementById('inviteLink');
-  if (currentUser?.id) {
-    inviteLinkEl.textContent = `https://t.me/YourBot?start=ref_${currentUser.id}`;
-  }
-
-  // Fill in the Profile tab
-  document.getElementById('profileName').textContent =
-    currentUser?.first_name || 'Adewa User';
-  document.getElementById('profileId').textContent =
-    currentUser?.id || '–';
-  document.getElementById('profileUsername').textContent =
-    currentUser?.username ? '@' + currentUser.username : '–';
-
-  if (isAdmin) {
-    document.getElementById('adminPill').style.display = 'inline-block';
-    document.getElementById('adminNavBtn').style.display = 'flex';
-  }
-
-  showScreen('app');
+  S.isAdmin = isAdmin;
+  $('#adminPill').style.display = isAdmin ? 'inline-block' : 'none';
+  $('#nav').innerHTML = TABS.filter((t) => !t.admin || isAdmin).map((t) =>
+    '<button data-page="' + t.id + '" style="--c:' + t.color + '">' + svg(t.icon) + t.label + '</button>').join('');
+  show('app');
+  go('home');
 }
 
-/*
-=========================================================
-BOTTOM NAV (Home / Earn / Invite / Profile / Admin)
-=========================================================
-*/
+let poll = null;
+function go(p) {
+  S.page = p;
+  clearInterval(poll);
+  document.querySelectorAll('.page').forEach((e) => e.classList.remove('active'));
+  $('#page-' + p).classList.add('active');
+  document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('on', b.dataset.page === p));
+  window.scrollTo(0, 0);
+  ({ home: renderHome, earn: renderEarn, invite: renderInvite, profile: renderProfile, admin: renderAdmin })[p]();
+}
 
-document.querySelectorAll('.nav-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
+$('#nav').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-page]');
+  if (b) go(b.dataset.page);
+});
 
-    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
-    document.querySelectorAll('.tab-page').forEach((p) => p.classList.remove('active'));
+async function refresh() { await loadMe(); ({ home: renderHome, earn: renderEarn, invite: renderInvite, profile: renderProfile, admin: () => {} })[S.page](); }
 
-    btn.classList.add('active');
-    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+/* =========================================================
+   CLICK DELEGATION
+   ========================================================= */
 
-    if (btn.dataset.page === 'admin') {
-      loadAdminData();
-    }
+const H = {};
+document.addEventListener('click', async (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const fn = H[el.dataset.act];
+  if (!fn) return;
+  el.disabled = true;
+  try { await fn(el); }
+  catch (err) { toast(err.message || 'Something went wrong', 'err'); }
+  finally { el.disabled = false; }
+});
+
+H.retry = () => boot();
+
+/* =========================================================
+   HOME
+   ========================================================= */
+
+function wheelSvg(rewards) {
+  const n = rewards.length, R = 100, cols = [C.blue, C.violet, C.green, C.amber, C.rose, C.teal, C.orange];
+  let s = '<svg viewBox="-104 -104 208 208"><circle r="103" fill="#1a1e25"/><g id="wheelG">';
+  for (let i = 0; i < n; i++) {
+    const a0 = (i / n) * 2 * Math.PI - Math.PI / 2, a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2;
+    const x0 = R * Math.cos(a0), y0 = R * Math.sin(a0), x1 = R * Math.cos(a1), y1 = R * Math.sin(a1);
+    s += '<path d="M0 0L' + x0.toFixed(2) + ' ' + y0.toFixed(2) + 'A' + R + ' ' + R + ' 0 0 1 ' + x1.toFixed(2) + ' ' + y1.toFixed(2) + 'Z" fill="' + cols[i % cols.length] + '" stroke="#12151a" stroke-width="2"/>';
+    const mid = ((i + 0.5) / n) * 360;
+    s += '<text transform="rotate(' + mid + ') translate(0 -66)" text-anchor="middle" font-size="16" font-weight="800" fill="#0b0d10">' + rewards[i] + '</text>';
+  }
+  return s + '</g><circle r="16" fill="#12151a" stroke="#252b34" stroke-width="2"/></svg>';
+}
+
+function renderHome() {
+  const m = S.me, r = m.rates;
+  const seg = m.streak > 0 ? ((m.streak - 1) % 7) + 1 : 0;
+  let bar = '';
+  for (let i = 0; i < 7; i++) bar += '<i class="' + (i < seg ? 'on' : '') + '"></i>';
+
+  $('#page-home').innerHTML =
+    '<div class="card bal">' +
+      '<div class="lbl">Total balance</div>' +
+      '<div class="big"><span style="color:' + C.amber + '">' + svg('coin') + '</span>' + fmt(m.coins) + '</div>' +
+      '<div class="sub">' + (m.coins * r.birr_per_coin).toFixed(2) + ' ETB &nbsp;/&nbsp; ' + (m.coins * r.usdt_per_coin).toFixed(3) + ' USDT</div>' +
+    '</div>' +
+
+    '<div class="card">' +
+      '<div class="row">' + ico('flame', C.orange) +
+        '<div class="grow"><div class="b">' + m.streak + ' day streak</div><div class="xs mut">Best: ' + m.best_streak + ' days. Open Adewa daily to keep it going.</div></div>' +
+      '</div>' +
+      '<div class="streak-bar">' + bar + '</div>' +
+    '</div>' +
+
+    '<div class="stat-grid" style="margin-top:12px">' +
+      '<div class="stat"><b>' + m.ads.watched + '/' + m.ads.limit + '</b><span>Ads today</span></div>' +
+      '<div class="stat"><b>' + fmt(m.total_earned) + '</b><span>Total earned</span></div>' +
+      '<div class="stat"><b>' + m.referrals.active + '/' + m.referrals.required + '</b><span>Active invites</span></div>' +
+    '</div>' +
+
+    '<div class="h">Daily spin</div>' +
+    '<div class="card" style="text-align:center">' +
+      '<div class="wheel-box"><div class="ptr"></div>' + wheelSvg(m.spin.rewards) + '</div>' +
+      '<button class="btn violet block" data-act="spin"' + (m.spin.available ? '' : ' disabled') + '>' + svg('refresh' in P ? 'refresh' : 'gift') + (m.spin.available ? 'Spin now' : 'Come back tomorrow') + '</button>' +
+    '</div>' +
+
+    '<div class="h">Live winners</div>' +
+    '<div class="card" id="winners"><div class="empty">Loading</div></div>';
+
+  loadWinners();
+  poll = setInterval(loadWinners, 20000);
+}
+
+async function loadWinners() {
+  try {
+    const d = await api('/api/winners');
+    const box = $('#winners');
+    if (!box) return;
+    box.innerHTML = d.winners.length
+      ? d.winners.map((w) => '<div class="winner"><span class="row" style="gap:10px">' + ico('gift', C.violet, 'sm') + '<span class="clip" style="max-width:150px">' + esc(w.name) + '</span></span><span><b style="color:' + C.green + '">+' + w.reward + '</b> <span class="xs mut">' + timeAgo(w.at) + '</span></span></div>').join('')
+      : '<div class="empty">No spins yet. Be the first winner today.</div>';
+  } catch (e) { /* ignore */ }
+}
+
+H.spin = async () => {
+  const d = await api('/api/spin', { method: 'POST' });
+  const rw = S.me.spin.rewards, n = rw.length, idx = Math.max(0, rw.indexOf(d.reward));
+  const g = $('#wheelG');
+  g.style.transition = 'transform 4.2s cubic-bezier(.12,.7,.1,1)';
+  g.style.transform = 'rotate(' + (360 * 6 - (idx + 0.5) * (360 / n)) + 'deg)';
+  await sleep(4500);
+  toast('You won ' + d.reward + ' coins', 'ok');
+  await refresh();
+};
+
+/* =========================================================
+   EARN
+   ========================================================= */
+
+const PROVIDER_ICON = { microtasks: 'checksq', survey: 'clipboard', offerwall: 'layers' };
+
+function ring(pct, color, big, small) {
+  const c = 2 * Math.PI * 44;
+  return '<div class="ringbox"><svg viewBox="0 0 100 100" class="ring"><circle cx="50" cy="50" r="44" class="ring-bg"/><circle cx="50" cy="50" r="44" class="ring-fg" style="stroke:' + color + ';stroke-dasharray:' + c + ';stroke-dashoffset:' + (c * (1 - pct)) + '"/></svg><div class="mid"><b>' + big + '</b><span>' + small + '</span></div></div>';
+}
+
+function taskCard(t) {
+  const isCh = t.kind === 'channel';
+  const provider = String(t.provider || '').toLowerCase();
+  const icon = isCh ? ico('megaphone', C.teal) : t.kind === 'social' ? ico('globe', C.violet) : ico(PROVIDER_ICON[provider] || 'layers', C.orange);
+  const kindLabel = isCh ? 'Join' : t.kind === 'social' ? 'Social' : (t.provider || 'Partner');
+
+  let acts;
+  if (t.my_status === 'pending') acts = '<span class="chip amber" style="padding:9px 14px;flex:1;text-align:center">Under review</span>';
+  else if (isCh) acts = '<button class="btn ghost s" data-act="openTask" data-url="' + esc(t.link) + '">Open</button><button class="btn green s" data-act="claim" data-id="' + t.id + '">Verify</button>';
+  else acts = '<button class="btn ghost s" data-act="openTask" data-url="' + esc(t.link) + '">Open link</button><button class="btn violet s" data-act="proof" data-id="' + t.id + '">Submit proof</button>';
+
+  return '<div class="card"><div class="task">' + icon +
+    '<div class="grow"><div class="b">' + esc(t.title) + '</div>' +
+    (t.description ? '<div class="sm mut clamp" style="margin-top:3px">' + esc(t.description) + '</div>' : '') +
+    '<div class="meta"><span class="chip green">+' + t.reward + ' coins</span><span class="chip">' + esc(kindLabel) + '</span><span class="chip">' + t.remaining + ' left</span></div>' +
+    '</div></div><div class="acts">' + acts + '</div></div>';
+}
+
+async function renderEarn() {
+  const m = S.me, a = m.ads;
+  const tab = S.earnTab;
+
+  let body = '';
+  if (tab === 'ads') {
+    const left = Math.max(a.limit - a.watched, 0);
+    body =
+      '<div class="card" style="text-align:center">' +
+        ring(a.limit ? a.watched / a.limit : 0, C.blue, a.watched + '/' + a.limit, 'ads watched today') +
+        '<div class="sm mut" style="margin-bottom:14px">Earn <b style="color:' + C.green + '">' + a.reward + ' coins</b> for every ad you watch. ' + (left ? left + ' left today.' : 'Daily limit reached.') + '</div>' +
+        '<button class="btn block" data-act="watch"' + (left ? '' : ' disabled') + '>' + svg('play') + (left ? 'Watch an ad' : 'Come back tomorrow') + '</button>' +
+      '</div>' +
+      '<div class="card"><div class="row">' + ico('clock', C.amber, 'sm') + '<div class="sm mut grow">Your invited friends count as active after they watch ads on ' + m.referrals.ad_days + ' different days.</div></div></div>';
+  } else {
+    body = '<div class="empty">Loading</div>';
+  }
+
+  $('#page-earn').innerHTML =
+    '<div class="seg" style="margin:8px 0 14px">' +
+      ['ads:Watch ads', 'tasks:Tasks', 'partners:Partners'].map((x) => { const p = x.split(':'); return '<button class="' + (tab === p[0] ? 'on' : '') + '" data-act="earnTab" data-tab="' + p[0] + '">' + p[1] + '</button>'; }).join('') +
+    '</div><div id="earnBody">' + body + '</div>';
+
+  if (tab !== 'ads') {
+    try {
+      const d = await api('/api/tasks');
+      S.tasks = d.tasks;
+      const list = d.tasks.filter((t) => tab === 'tasks' ? t.kind !== 'partner' : t.kind === 'partner');
+      const box = $('#earnBody');
+      if (!box || S.earnTab !== tab) return;
+      box.innerHTML = list.length
+        ? list.map(taskCard).join('')
+        : '<div class="empty">' + (tab === 'tasks' ? 'No tasks right now. New ones are added regularly.' : 'No partner tasks right now.') + '</div>';
+    } catch (e) { const box = $('#earnBody'); if (box) box.innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; }
+  }
+}
+
+H.earnTab = (el) => { S.earnTab = el.dataset.tab; renderEarn(); };
+H.openTask = (el) => openUrl(el.dataset.url);
+
+H.claim = async (el) => {
+  const d = await api('/api/tasks/' + el.dataset.id + '/claim', { method: 'POST' });
+  toast('+' + d.reward + ' coins', 'ok');
+  await refresh();
+};
+
+H.proof = (el) => {
+  if (!S.me.bot_username) throw new Error('Bot username is not configured.');
+  openUrl('https://t.me/' + S.me.bot_username + '?start=proof_' + el.dataset.id);
+};
+
+/* ---------- ads ---------- */
+async function showAd(provider, cfg) {
+  if (provider === 'adsgram') {
+    if (!cfg.adsgram_block_id) throw new Error('Adsgram not configured');
+    await loadScript('https://sad.adsgram.ai/js/sad.min.js');
+    const r = await window.Adsgram.init({ blockId: cfg.adsgram_block_id }).show();
+    if (!r || !r.done) throw new Error('Ad not completed');
+    return;
+  }
+  if (provider === 'adsbitvex') {
+    // Adapter for the Adsbitvex SDK. Adjust the call below to match the
+    // snippet from your Adsbitvex dashboard if their SDK differs.
+    if (!cfg.adsbitvex_zone) throw new Error('Adsbitvex not configured');
+    if (cfg.adsbitvex_script) await loadScript(cfg.adsbitvex_script);
+    const sdk = window.AdsBitvex || window.Adsbitvex;
+    if (!sdk || typeof sdk.show !== 'function') throw new Error('Adsbitvex SDK not available');
+    await sdk.show({ zone: cfg.adsbitvex_zone });
+    return;
+  }
+  throw new Error('Unknown provider');
+}
+
+H.watch = async () => {
+  const a = S.me.ads;
+  if (a.watched >= a.limit) throw new Error('Daily ad limit reached. Come back tomorrow.');
+  const s = await api('/api/ads/start', { method: 'POST' });
+
+  let used = null;
+  const order = [s.provider, s.fallback];
+  for (let i = 0; i < order.length; i++) {
+    try { await showAd(order[i], s.config); used = order[i]; break; }
+    catch (e) { console.warn(order[i], e.message); }
+  }
+  if (!used) throw new Error('No ad is available right now. Please try again in a moment.');
+
+  const r = await api('/api/ads/complete', { method: 'POST', body: { token: s.token, provider: used } });
+  toast('+' + r.reward + ' coins', 'ok');
+  await refresh();
+};
+
+/* =========================================================
+   INVITE
+   ========================================================= */
+
+function inviteLink() { return 'https://t.me/' + (S.me.bot_username || 'YourBot') + '?start=ref_' + S.me.user.id; }
+
+function lbRows(list, color) {
+  if (!list || !list.length) return '<div class="empty">Nothing here yet.</div>';
+  return list.map((r, i) =>
+    '<div class="lb"><span class="rank ' + (i < 3 ? 'r' + (i + 1) : '') + '">' + (i + 1) + '</span>' +
+    '<span class="grow clip b">' + esc(r.name) + (r.me ? ' <span class="chip blue" style="margin-left:6px">You</span>' : '') + '</span>' +
+    '<span class="b" style="color:' + color + '">' + fmt(r.earned) + '</span></div>').join('');
+}
+
+async function renderInvite() {
+  const m = S.me, ref = m.referrals;
+  const pct = Math.min(100, ref.required ? (ref.active / ref.required) * 100 : 100);
+
+  $('#page-invite').innerHTML =
+    '<div class="card">' +
+      '<div class="row">' + ico('link', C.violet) + '<div class="grow"><div class="b">Your invite link</div><div class="xs mut">Share it and earn together</div></div></div>' +
+      '<div class="linkbox" style="margin-top:12px"><span class="clip">' + esc(inviteLink()) + '</span><button class="btn s violet" data-act="copyInvite">' + svg('copy') + 'Copy</button></div>' +
+      '<button class="btn ghost block" style="margin-top:10px" data-act="shareInvite">' + svg('send') + 'Share with friends</button>' +
+    '</div>' +
+
+    '<div class="card">' +
+      '<div class="row between"><span class="b">Active invites</span><span class="b">' + ref.active + ' / ' + ref.required + '</span></div>' +
+      '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="xs mut" style="margin-top:8px">' + ref.total + ' invited in total. A friend becomes active after watching ads on ' + ref.ad_days + ' different days. You need ' + ref.required + ' active friends to withdraw.</div>' +
+    '</div>' +
+
+    '<div class="h">Promo code</div>' +
+    '<div class="card"><div class="row" style="gap:8px">' + ico('ticket', C.rose) +
+      '<input class="inp" id="promoInp" placeholder="Enter code" autocapitalize="characters" style="text-transform:uppercase">' +
+      '<button class="btn rose" data-act="promo">Redeem</button></div></div>' +
+
+    '<div class="h">Leaderboards</div>' +
+    '<div class="seg" style="margin-bottom:12px">' +
+      '<button class="' + (S.invTab === 'mine' ? 'on' : '') + '" data-act="invTab" data-tab="mine">My top invites</button>' +
+      '<button class="' + (S.invTab === 'top' ? 'on' : '') + '" data-act="invTab" data-tab="top">Top earners</button>' +
+    '</div>' +
+    '<div class="card" id="lbBox"><div class="empty">Loading</div></div>';
+
+  try {
+    S.lb = await api('/api/leaderboard');
+    paintLb();
+  } catch (e) { const b = $('#lbBox'); if (b) b.innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; }
+}
+
+function paintLb() {
+  const b = $('#lbBox');
+  if (!b || !S.lb) return;
+  b.innerHTML = S.invTab === 'mine'
+    ? '<div class="row" style="margin-bottom:6px">' + ico('users', C.violet, 'sm') + '<span class="sm mut">Top 10 friends you invited by coins earned</span></div>' + lbRows(S.lb.invitees, C.green)
+    : '<div class="row" style="margin-bottom:6px">' + ico('trophy', C.amber, 'sm') + '<span class="sm mut">Top 15 earners in Adewa</span></div>' + lbRows(S.lb.top, C.amber);
+}
+
+H.invTab = (el) => {
+  S.invTab = el.dataset.tab;
+  document.querySelectorAll('#page-invite .seg button').forEach((b) => b.classList.toggle('on', b.dataset.tab === S.invTab));
+  paintLb();
+};
+H.copyInvite = () => copyText(inviteLink());
+H.shareInvite = () => openUrl('https://t.me/share/url?url=' + encodeURIComponent(inviteLink()) + '&text=' + encodeURIComponent('Join me on Adewa and start earning.'));
+
+H.promo = async () => {
+  const code = $('#promoInp').value.trim();
+  if (!code) throw new Error('Enter a promo code.');
+  const d = await api('/api/promo', { method: 'POST', body: { code } });
+  toast('Promo redeemed: +' + d.reward + ' coins', 'ok');
+  await refresh();
+};
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
+
+const STATUS_CHIP = { pending: 'amber', paid: 'green', rejected: 'rose' };
+
+async function renderProfile() {
+  const m = S.me, r = m.rates, ref = m.referrals, u = m.user;
+  const okInv = ref.active >= ref.required, okBal = m.coins >= m.withdraw.min_coins;
+  const avatarColor = Object.values(C)[u.id % 7];
+
+  $('#page-profile').innerHTML =
+    '<div class="card" style="text-align:center">' +
+      '<div class="avatar" style="background:' + avatarColor + '">' + esc((u.first_name || 'A').charAt(0).toUpperCase()) + '</div>' +
+      '<div class="b" style="font-size:18px">' + esc(u.first_name || 'Adewa user') + '</div>' +
+      '<div class="sm mut">' + (u.username ? '@' + esc(u.username) : 'ID ' + u.id) + '</div>' +
+    '</div>' +
+
+    '<div class="card" style="margin-top:12px">' +
+      '<div class="row">' + ico('wallet', C.green) + '<div class="grow"><div class="xs mut">Wallet balance</div><div class="b" style="font-size:22px">' + fmt(m.coins) + ' coins</div></div></div>' +
+      '<div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-top:14px">' +
+        '<div class="stat"><b>' + (m.coins * r.birr_per_coin).toFixed(2) + '</b><span>ETB</span></div>' +
+        '<div class="stat"><b>' + (m.coins * r.usdt_per_coin).toFixed(3) + '</b><span>USDT</span></div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="h">Withdraw</div>' +
+    '<div class="card">' +
+      '<div class="req">' + ico(okInv ? 'check' : 'users', okInv ? C.green : C.amber, 'sm') + '<div class="grow">' + ref.required + ' active invited friends<div class="xs mut">Each must watch ads on ' + ref.ad_days + ' different days</div></div><b>' + ref.active + '/' + ref.required + '</b></div>' +
+      '<div class="req">' + ico(okBal ? 'check' : 'coin', okBal ? C.green : C.amber, 'sm') + '<div class="grow">Minimum balance<div class="xs mut">' + fmt(m.withdraw.min_coins) + ' coins</div></div><b>' + fmt(m.coins) + '</b></div>' +
+
+      '<div class="seg" style="margin:14px 0 12px"><button class="on" data-act="wdMethod" data-m="bep20" id="m-bep20">BEP20 (USDT)</button><button data-act="wdMethod" data-m="ton" id="m-ton">TON wallet</button></div>' +
+      '<div class="field"><label id="addrLbl">BEP20 address</label><input class="inp" id="wdAddr" placeholder="0x..." autocomplete="off"></div>' +
+      '<div class="field"><label>Coins to withdraw</label><input class="inp" id="wdCoins" type="number" inputmode="numeric" placeholder="' + m.withdraw.min_coins + '"><div class="hint" id="wdHint"></div></div>' +
+      '<button class="btn green block" data-act="withdraw">' + svg('send') + 'Request withdrawal</button>' +
+    '</div>' +
+
+    '<div class="h">History</div><div class="card" id="wdList"><div class="empty">Loading</div></div>';
+
+  S.wdMethod = 'bep20';
+  $('#wdCoins').addEventListener('input', () => {
+    const v = Number($('#wdCoins').value) || 0;
+    $('#wdHint').textContent = v ? (v * r.birr_per_coin).toFixed(2) + ' ETB / ' + (v * r.usdt_per_coin).toFixed(3) + ' USDT' : '';
   });
-});
 
-document.getElementById('copyInviteBtn').addEventListener('click', () => {
-  const text = document.getElementById('inviteLink').textContent;
-  navigator.clipboard?.writeText(text).catch(() => {});
-});
-
-/*
-=========================================================
-ADMIN PANEL LOGIC
-=========================================================
-*/
-
-function adminHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    'x-init-data': tg.initData
-  };
+  try {
+    const d = await api('/api/withdrawals');
+    $('#wdList').innerHTML = d.withdrawals.length
+      ? d.withdrawals.map((w) => '<div class="lb"><div class="grow"><div class="b">' + fmt(w.coins) + ' coins <span class="xs mut">' + esc(w.method.toUpperCase()) + '</span></div><div class="xs mut">' + timeAgo(w.created_at) + '</div></div><span class="chip ' + (STATUS_CHIP[w.status] || '') + '">' + esc(w.status) + '</span></div>').join('')
+      : '<div class="empty">No withdrawals yet.</div>';
+  } catch (e) { const b = $('#wdList'); if (b) b.innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; }
 }
 
-async function loadAdminData() {
+H.wdMethod = (el) => {
+  S.wdMethod = el.dataset.m;
+  $('#m-bep20').classList.toggle('on', S.wdMethod === 'bep20');
+  $('#m-ton').classList.toggle('on', S.wdMethod === 'ton');
+  $('#addrLbl').textContent = S.wdMethod === 'bep20' ? 'BEP20 address' : 'TON wallet address';
+  $('#wdAddr').placeholder = S.wdMethod === 'bep20' ? '0x...' : 'UQ...';
+};
 
-  try {
-    const statsRes = await fetch(API_BASE + '/api/admin/stats', { headers: adminHeaders() });
-    const statsData = await statsRes.json();
+H.withdraw = async () => {
+  const address = $('#wdAddr').value.trim();
+  const coins = Number($('#wdCoins').value);
+  if (!address) throw new Error('Enter your wallet address.');
+  if (!coins) throw new Error('Enter the amount of coins.');
+  await api('/api/withdraw', { method: 'POST', body: { method: S.wdMethod, address, coins } });
+  toast('Withdrawal requested. You will be notified when it is paid.', 'ok');
+  await refresh();
+};
 
-    if (statsData.ok) {
-      document.getElementById('statTotal').textContent = statsData.stats.total;
-      document.getElementById('statVerified').textContent = statsData.stats.verified;
-      document.getElementById('statBanned').textContent = statsData.stats.banned;
-    }
-  } catch (error) {
-    console.error('Admin stats load error:', error);
-  }
+/* =========================================================
+   ADMIN
+   ========================================================= */
 
-  try {
-    const channelsRes = await fetch(API_BASE + '/api/admin/channels', { headers: adminHeaders() });
-    const channelsData = await channelsRes.json();
+const ADMIN_TABS = [
+  ['overview', 'Overview'], ['ads', 'Ads'], ['rates', 'Rates'], ['tasks', 'Tasks'], ['proofs', 'Proofs'],
+  ['payouts', 'Payouts'], ['promo', 'Promo'], ['users', 'Users'], ['channels', 'Channels'], ['broadcast', 'Broadcast']
+];
 
-    const listEl = document.getElementById('channelsList');
-
-    if (channelsData.ok && channelsData.channels.length > 0) {
-      listEl.innerHTML = channelsData.channels
-        .map((c) => `
-          <div class="list-card">
-            <div>
-              <div class="label">${c.title || c.chat_id}</div>
-              <div class="value">${c.chat_id}</div>
-            </div>
-            <button class="admin-btn ban" data-remove-id="${c.id}" style="padding:6px 10px;font-size:12px;">✕</button>
-          </div>
-        `)
-        .join('');
-
-      listEl.querySelectorAll('[data-remove-id]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          try {
-            await fetch(`${API_BASE}/api/admin/channels/${btn.dataset.removeId}`, { method: 'DELETE', headers: adminHeaders() });
-            loadAdminData();
-          } catch (error) {
-            console.error('Remove channel error:', error);
-          }
-        });
-      });
-    } else {
-      listEl.innerHTML = '<div class="placeholder-card">No required channels configured yet.</div>';
-    }
-  } catch (error) {
-    console.error('Admin channels load error:', error);
-  }
+function renderAdmin() {
+  $('#page-admin').innerHTML =
+    '<div class="chips">' + ADMIN_TABS.map((t) => '<button class="' + (S.adminTab === t[0] ? 'on' : '') + '" data-act="adminTab" data-tab="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' +
+    '<div id="adminBody"></div>';
+  loadAdminTab();
 }
 
-document.getElementById('banBtn').addEventListener('click', async () => {
+H.adminTab = (el) => {
+  S.adminTab = el.dataset.tab;
+  document.querySelectorAll('#page-admin .chips button').forEach((b) => b.classList.toggle('on', b.dataset.tab === S.adminTab));
+  loadAdminTab();
+};
 
-  const id = document.getElementById('adminUserId').value;
-  if (!id) return;
+async function loadAdminTab() {
+  const b = $('#adminBody');
+  b.innerHTML = '<div class="empty">Loading</div>';
+  try { await AV[S.adminTab](b); }
+  catch (e) { b.innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; }
+}
 
-  try {
-    await fetch(`${API_BASE}/api/admin/ban/${id}`, { method: 'POST', headers: adminHeaders() });
-    loadAdminData();
-  } catch (error) {
-    console.error('Ban error:', error);
-  }
-});
+const fld = (label, id, o) => {
+  o = o || {};
+  const inner = o.area
+    ? '<textarea class="inp" id="' + id + '" placeholder="' + esc(o.ph || '') + '">' + esc(o.value || '') + '</textarea>'
+    : o.options
+      ? '<select class="inp" id="' + id + '">' + o.options.map((x) => '<option value="' + x[0] + '">' + x[1] + '</option>').join('') + '</select>'
+      : '<input class="inp" id="' + id + '" type="' + (o.type || 'text') + '" value="' + esc(o.value == null ? '' : o.value) + '" placeholder="' + esc(o.ph || '') + '">';
+  return '<div class="field"><label>' + label + '</label>' + inner + (o.hint ? '<div class="hint">' + o.hint + '</div>' : '') + '</div>';
+};
 
-document.getElementById('unbanBtn').addEventListener('click', async () => {
+const val = (id) => { const e = $('#' + id); return e ? e.value.trim() : ''; };
 
-  const id = document.getElementById('adminUserId').value;
-  if (!id) return;
+async function settingsView(b, title, icon, color, keys) {
+  const d = await api('/api/admin/settings');
+  const s = d.settings;
+  b.innerHTML = '<div class="card"><div class="row" style="margin-bottom:14px">' + ico(icon, color) + '<div class="b">' + title + '</div></div>' +
+    keys.map((k) => fld(k[1], 'set_' + k[0], { value: s[k[0]], hint: k[2], type: k[3] || 'text' })).join('') +
+    '<button class="btn block" style="background:' + color + '" data-act="saveSettings" data-keys="' + keys.map((k) => k[0]).join(',') + '">Save changes</button></div>';
+}
 
-  try {
-    await fetch(`${API_BASE}/api/admin/unban/${id}`, { method: 'POST', headers: adminHeaders() });
-    loadAdminData();
-  } catch (error) {
-    console.error('Unban error:', error);
-  }
-});
+H.saveSettings = async (el) => {
+  const body = {};
+  el.dataset.keys.split(',').forEach((k) => { body[k] = val('set_' + k); });
+  await api('/api/admin/settings', { method: 'POST', body });
+  toast('Saved', 'ok');
+};
 
-document.getElementById('addChannelBtn').addEventListener('click', async () => {
+const AV = {};
 
-  const chat_id = document.getElementById('channelChatId').value.trim();
-  const title = document.getElementById('channelTitle').value.trim();
-  const invite_link = document.getElementById('channelInviteLink').value.trim();
+AV.overview = async (b) => {
+  const d = await api('/api/admin/stats'), s = d.stats;
+  const cell = (n, l, c) => '<div class="card" style="margin:0"><div class="row">' + ico(n, c, 'sm') + '<div><div class="b" style="font-size:20px">' + fmt(s[l[0]]) + '</div><div class="xs mut">' + l[1] + '</div></div></div></div>';
+  b.innerHTML = '<div class="agrid">' +
+    cell('users', ['total', 'Total users'], C.blue) + cell('check', ['verified', 'Verified'], C.green) +
+    cell('ban', ['banned', 'Banned'], C.rose) + cell('coin', ['coins_in_wallets', 'Coins in wallets'], C.amber) +
+    cell('image', ['proofs', 'Proofs pending'], C.violet) + cell('wallet', ['withdrawals', 'Payouts pending'], C.orange) + '</div>';
+};
 
-  if (!chat_id) return;
+AV.ads = (b) => settingsView(b, 'Ad settings', 'play', C.blue, [
+  ['ad_daily_limit', 'Ads per user per day', 'Maximum ads each user can watch daily.', 'number'],
+  ['ad_reward', 'Coins per ad', '', 'number'],
+  ['ad_min_seconds', 'Minimum watch time (seconds)', 'Rewards are refused if the ad finishes faster than this.', 'number'],
+  ['adsgram_block_id', 'Adsgram block ID', 'Example: 12345 or int-12345'],
+  ['adsbitvex_zone', 'Adsbitvex zone ID', ''],
+  ['adsbitvex_script', 'Adsbitvex SDK script URL', 'Optional. Loaded before showing an ad.']
+]);
 
-  try {
-    await fetch(`${API_BASE}/api/admin/channels`, {
-      method: 'POST',
-      headers: adminHeaders(),
-      body: JSON.stringify({ chat_id, title, invite_link })
-    });
+AV.rates = (b) => settingsView(b, 'System rates', 'sliders', C.amber, [
+  ['birr_per_coin', 'ETB per 1 coin', 'Example: 0.05', 'number'],
+  ['usdt_per_coin', 'USDT per 1 coin', 'Example: 0.0004', 'number'],
+  ['min_withdraw_coins', 'Minimum withdrawal (coins)', '', 'number'],
+  ['referral_required', 'Active invites needed to withdraw', '', 'number'],
+  ['referral_ad_days', 'Ad days for an invite to count as active', '', 'number'],
+  ['spin_rewards', 'Spin rewards (coins)', 'Comma separated, for example 1,2,3,5,10']
+]);
 
-    document.getElementById('channelChatId').value = '';
-    document.getElementById('channelTitle').value = '';
-    document.getElementById('channelInviteLink').value = '';
+AV.tasks = async (b) => {
+  const d = await api('/api/admin/tasks');
+  b.innerHTML =
+    '<div class="card"><div class="row" style="margin-bottom:14px">' + ico('plus', C.green) + '<div class="b">Create a task</div></div>' +
+      fld('Task type', 't_kind', { options: [['channel', 'Channel or group (auto-checked)'], ['social', 'Social media (screenshot proof)'], ['partner', 'Partner task (screenshot proof)']] }) +
+      fld('Title', 't_title', { ph: 'Join our channel' }) +
+      fld('Description', 't_desc', { area: true, ph: 'What should users do?' }) +
+      fld('Channel or group username', 't_chat', { ph: '@adewa_channel', hint: 'Channel tasks only. The bot must be an admin there to verify members.' }) +
+      fld('Task link', 't_link', { ph: 'https://...', hint: 'Required for social and partner tasks. Optional for channels.' }) +
+      fld('Partner category', 't_provider', { ph: 'Microtasks, Survey or Offerwall', hint: 'Partner tasks only.' }) +
+      fld('Reward (coins)', 't_reward', { type: 'number' }) +
+      fld('User limit', 't_max', { type: 'number', hint: 'The task disappears once this many users finish it.' }) +
+      '<button class="btn green block" data-act="createTask">Publish task</button></div>' +
+    '<div class="h">All tasks</div>' +
+    (d.tasks.length ? d.tasks.map((t) =>
+      '<div class="card"><div class="row"><div class="grow"><div class="b clip">' + esc(t.title) + '</div><div class="xs mut">' + esc(t.kind) + ' / ' + t.reward + ' coins / ' + t.done_count + ' of ' + t.max_users + ' done</div></div>' +
+      (t.active ? '<span class="chip green">active</span><button class="btn ghost s" data-act="delTask" data-id="' + t.id + '">' + svg('trash') + '</button>' : '<span class="chip">closed</span>') + '</div></div>').join('') : '<div class="empty">No tasks yet.</div>');
+};
 
-    loadAdminData();
-  } catch (error) {
-    console.error('Add channel error:', error);
-  }
-});
+H.createTask = async () => {
+  await api('/api/admin/tasks', { method: 'POST', body: {
+    kind: val('t_kind'), title: val('t_title'), description: val('t_desc'), chat_id: val('t_chat'),
+    link: val('t_link'), provider: val('t_provider'), reward: val('t_reward'), max_users: val('t_max') } });
+  toast('Task published', 'ok');
+  loadAdminTab();
+};
+H.delTask = async (el) => { await api('/api/admin/tasks/' + el.dataset.id, { method: 'DELETE' }); toast('Task closed', 'ok'); loadAdminTab(); };
 
-/*
-=========================================================
-BOOT: show splash for a beat, then authenticate
-=========================================================
-*/
+AV.proofs = async (b) => {
+  const d = await api('/api/admin/proofs');
+  b.innerHTML = d.proofs.length ? d.proofs.map((p) =>
+    '<div class="card"><div class="row">' + ico('image', C.violet) + '<div class="grow"><div class="b clip">' + esc(p.title) + '</div><div class="xs mut">' + esc(p.first_name || 'User') + (p.username ? ' @' + esc(p.username) : '') + ' / ' + p.telegram_id + '</div></div><span class="chip green">+' + p.reward + '</span></div>' +
+    '<div id="pimg-' + p.id + '"></div>' +
+    '<div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost s grow" data-act="viewProof" data-id="' + p.id + '">View screenshot</button>' +
+    '<button class="btn green s" data-act="decide" data-do="approve" data-id="' + p.id + '">Approve</button>' +
+    '<button class="btn rose s" data-act="decide" data-do="reject" data-id="' + p.id + '">Reject</button></div></div>').join('')
+    : '<div class="empty">No proofs waiting for review.</div>';
+};
 
-setTimeout(authenticate, 1400);
+H.viewProof = async (el) => {
+  const res = await fetchT(API + '/api/admin/proofs/' + el.dataset.id + '/image', { headers: hdr() }, 30000);
+  if (!res.ok) throw new Error('Could not load the screenshot.');
+  const url = URL.createObjectURL(await res.blob());
+  $('#pimg-' + el.dataset.id).innerHTML = '<img class="proofimg" src="' + url + '" alt="Proof">';
+};
 
+H.decide = async (el) => {
+  await api('/api/admin/proofs/' + el.dataset.id + '/' + el.dataset.do, { method: 'POST' });
+  toast(el.dataset.do === 'approve' ? 'Approved' : 'Rejected', 'ok');
+  loadAdminTab();
+};
+
+AV.payouts = async (b) => {
+  const d = await api('/api/admin/withdrawals');
+  b.innerHTML = d.withdrawals.length ? d.withdrawals.map((w) =>
+    '<div class="card"><div class="row">' + ico('wallet', C.orange) + '<div class="grow"><div class="b">' + fmt(w.coins) + ' coins</div><div class="xs mut">' + esc(w.first_name || 'User') + (w.username ? ' @' + esc(w.username) : '') + ' / ' + w.telegram_id + '</div></div><span class="chip blue">' + esc(w.method.toUpperCase()) + '</span></div>' +
+    '<div class="sm" style="margin-top:10px"><b>' + Number(w.amount_birr).toFixed(2) + ' ETB</b> <span class="mut">/</span> <b>' + Number(w.amount_usdt).toFixed(3) + ' USDT</b></div>' +
+    '<div class="addr">' + esc(w.address) + '</div>' +
+    '<div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost s" data-act="copyAddr" data-a="' + esc(w.address) + '">' + svg('copy') + 'Copy</button>' +
+    '<button class="btn green s grow" data-act="payout" data-do="paid" data-id="' + w.id + '">Mark paid</button>' +
+    '<button class="btn rose s" data-act="payout" data-do="reject" data-id="' + w.id + '">Reject</button></div></div>').join('')
+    : '<div class="empty">No pending withdrawals.</div>';
+};
+
+H.copyAddr = (el) => copyText(el.dataset.a);
+H.payout = async (el) => {
+  await api('/api/admin/withdrawals/' + el.dataset.id + '/' + el.dataset.do, { method: 'POST' });
+  toast(el.dataset.do === 'paid' ? 'Marked as paid' : 'Rejected and refunded', 'ok');
+  loadAdminTab();
+};
+
+AV.promo = async (b) => {
+  const d = await api('/api/admin/promos');
+  b.innerHTML =
+    '<div class="card"><div class="row" style="margin-bottom:14px">' + ico('ticket', C.rose) + '<div class="b">Create promo code</div></div>' +
+      fld('Code', 'p_code', { ph: 'WELCOME100' }) + fld('Reward (coins)', 'p_reward', { type: 'number' }) + fld('Maximum uses', 'p_max', { type: 'number', hint: 'The code stops working after this many people use it.' }) +
+      '<button class="btn rose block" data-act="createPromo">Create code</button></div>' +
+    '<div class="h">Codes</div>' +
+    (d.promos.length ? d.promos.map((p) =>
+      '<div class="card"><div class="row"><div class="grow"><div class="b">' + esc(p.code) + '</div><div class="xs mut">' + p.reward + ' coins / ' + p.used_count + ' of ' + p.max_uses + ' used</div></div>' +
+      (p.active ? '<span class="chip green">active</span><button class="btn ghost s" data-act="delPromo" data-code="' + esc(p.code) + '">' + svg('trash') + '</button>' : '<span class="chip">off</span>') + '</div></div>').join('') : '<div class="empty">No promo codes yet.</div>');
+};
+
+H.createPromo = async () => {
+  await api('/api/admin/promos', { method: 'POST', body: { code: val('p_code'), reward: val('p_reward'), max_uses: val('p_max') } });
+  toast('Promo code created', 'ok'); loadAdminTab();
+};
+H.delPromo = async (el) => { await api('/api/admin/promos/' + encodeURIComponent(el.dataset.code), { method: 'DELETE' }); toast('Code disabled', 'ok'); loadAdminTab(); };
+
+AV.users = (b) => {
+  b.innerHTML =
+    '<div class="card"><div class="row" style="margin-bottom:14px">' + ico('ban', C.rose) + '<div class="b">Manage a user</div></div>' +
+      fld('Telegram ID', 'u_id', { type: 'number', ph: '123456789' }) +
+      '<button class="btn ghost block" data-act="lookup">' + svg('user') + 'Look up</button><div id="uInfo"></div>' +
+      '<div class="row" style="gap:8px;margin-top:12px"><button class="btn rose grow" data-act="userAct" data-do="ban">Ban</button><button class="btn green grow" data-act="userAct" data-do="unban">Unban</button></div></div>';
+};
+
+H.lookup = async () => {
+  const id = val('u_id'); if (!id) throw new Error('Enter a Telegram ID.');
+  const d = await api('/api/admin/user/' + id);
+  $('#uInfo').innerHTML = d.user
+    ? '<div class="addr" style="margin-top:12px"><b>' + esc(d.user.first_name || 'User') + '</b> ' + (d.user.username ? '@' + esc(d.user.username) : '') +
+      '<br>Status: <b>' + esc(d.user.status) + '</b>' + (d.user.ban_reason ? ' (' + esc(d.user.ban_reason) + ')' : '') +
+      '<br>Coins: ' + fmt(d.user.coins) + ' / Earned: ' + fmt(d.user.total_earned) + ' / Streak: ' + (d.user.streak || 0) + '</div>'
+    : '<div class="addr" style="margin-top:12px">User not found.</div>';
+};
+
+H.userAct = async (el) => {
+  const id = val('u_id'); if (!id) throw new Error('Enter a Telegram ID.');
+  await api('/api/admin/' + el.dataset.do + '/' + id, { method: 'POST' });
+  toast(el.dataset.do === 'ban' ? 'User banned' : 'User unbanned', 'ok');
+};
+
+AV.channels = async (b) => {
+  const d = await api('/api/admin/channels');
+  b.innerHTML =
+    '<div class="card"><div class="row" style="margin-bottom:14px">' + ico('megaphone', C.teal) + '<div class="b">Required channels</div></div>' +
+      '<div class="xs mut" style="margin-bottom:12px">Users must join all of these before the app opens.</div>' +
+      fld('Username or chat ID', 'c_id', { ph: '@channel or -100...' }) + fld('Display title', 'c_title', { ph: 'Adewa Official' }) + fld('Invite link (optional)', 'c_link', { ph: 'https://t.me/...' }) +
+      '<button class="btn block" style="background:' + C.teal + '" data-act="addChannel">Add channel</button></div>' +
+    '<div class="h">Current channels</div>' +
+    (d.channels.length ? d.channels.map((c) =>
+      '<div class="card"><div class="row"><div class="grow"><div class="b clip">' + esc(c.title || c.chat_id) + '</div><div class="xs mut clip">' + esc(c.chat_id) + '</div></div><button class="btn ghost s" data-act="delChannel" data-id="' + c.id + '">' + svg('trash') + '</button></div></div>').join('') : '<div class="empty">No required channels yet.</div>');
+};
+
+H.addChannel = async () => {
+  await api('/api/admin/channels', { method: 'POST', body: { chat_id: val('c_id'), title: val('c_title'), invite_link: val('c_link') } });
+  toast('Channel added', 'ok'); loadAdminTab();
+};
+H.delChannel = async (el) => { await api('/api/admin/channels/' + el.dataset.id, { method: 'DELETE' }); toast('Channel removed', 'ok'); loadAdminTab(); };
+
+AV.broadcast = (b) => {
+  b.innerHTML = '<div class="card"><div class="row" style="margin-bottom:14px">' + ico('bell', C.blue) + '<div class="b">Push notification</div></div>' +
+    fld('Message', 'b_text', { area: true, ph: 'A new high paying task is live. Open Adewa now.', hint: 'Sent to every verified user through the bot.' }) +
+    '<button class="btn block" data-act="broadcast">' + svg('send') + 'Send to all users</button></div>';
+};
+
+H.broadcast = async () => {
+  const text = val('b_text'); if (!text) throw new Error('Write a message first.');
+  const d = await api('/api/admin/broadcast', { method: 'POST', body: { text } });
+  toast('Delivered to ' + d.sent + ' of ' + d.total + ' users', 'ok');
+  $('#b_text').value = '';
+};
+
+/* =========================================================
+   START
+   ========================================================= */
+
+boot();
 </script>
-
 </body>
-
 </html>
